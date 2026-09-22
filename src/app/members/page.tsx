@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { useApp } from '@/lib/context/AppContext';
 import { formatCurrencyINR, toDevanagariDigits } from '@/lib/formatters';
 import { 
@@ -22,7 +23,8 @@ import {
   X,
   MessageCircle,
   Award,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 
 interface MemberItem {
@@ -63,8 +65,10 @@ const ROLE_CONFIG: Record<string, { label: string; icon: any; badgeClass: string
 };
 
 export default function MembersPage() {
+  const { data: session } = useSession();
   const { mandal, currentRole } = useApp();
-  const isAdmin = currentRole === 'ADMIN';
+  const isSuperAdminEmail = session?.user?.email?.toLowerCase().trim() === 'bhawanimandirwale@gmail.com';
+  const isAdmin = isSuperAdminEmail || currentRole === 'ADMIN' || (session?.user as any)?.role === 'ADMIN';
 
   const [members, setMembers] = useState<MemberItem[]>([]);
   const [inviteCode, setInviteCode] = useState('NYB026');
@@ -72,6 +76,7 @@ export default function MembersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [copied, setCopied] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Add Member Modal State
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -193,6 +198,41 @@ export default function MembersPage() {
       }
     } catch (err) {
       console.error('Error updating role:', err);
+    }
+  };
+
+  const handleDeleteMember = async (member: MemberItem) => {
+    if (!isAdmin) {
+      alert('फक्त अध्यक्षांना (Adhyaksh) सदस्य काढून टाकण्याचा अधिकार आहे.');
+      return;
+    }
+
+    if (member.email?.toLowerCase().trim() === 'bhawanimandirwale@gmail.com') {
+      alert('मुख्य अध्यक्षांचे (Adhyaksh) अधिकृत खाते हटवता येत नाही.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `तुम्हाला खात्री आहे का की "${member.name}" या कार्यकर्त्याला मंडळातून काढून टाकायचे आहे?\n\nकाढून टाकल्यानंतर हा सदस्य मंडळातून पूर्णपणे निष्कासित होईल आणि लॉगिन करू शकणार नाही.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(member.id);
+      const res = await fetch(`/api/members/${member.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'सदस्य हटवताना त्रुटी आली.');
+      }
+
+      setMembers((prev) => prev.filter((m) => m.id !== member.id));
+    } catch (err: any) {
+      alert(err.message || 'त्रुटी आली.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -535,6 +575,23 @@ export default function MembersPage() {
                         }`}
                       >
                         {isPending ? '✓ मंजूर करा' : isSuspended ? 'सक्रिय करा' : 'निलंबित करा'}
+                      </button>
+                    )}
+
+                    {isAdmin && m.email?.toLowerCase().trim() !== 'bhawanimandirwale@gmail.com' && (
+                      <button
+                        type="button"
+                        disabled={deletingId === m.id}
+                        onClick={() => handleDeleteMember(m)}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-red-200 text-red-600 hover:bg-red-600 hover:text-white transition-colors flex items-center gap-1 active:scale-95 disabled:opacity-50"
+                        title="मंडळातून काढून टाका (केवळ अध्यक्ष)"
+                      >
+                        {deletingId === m.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3 h-3" />
+                        )}
+                        <span>काढून टाका</span>
                       </button>
                     )}
                   </div>

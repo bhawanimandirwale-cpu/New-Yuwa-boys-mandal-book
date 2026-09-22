@@ -59,10 +59,20 @@ export async function DELETE(
     const { id } = await context.params;
     await connectToDatabase();
 
-    const deleted = await MandalMember.findByIdAndDelete(id);
-    if (!deleted) {
+    const memberToDelete = await MandalMember.findById(id).populate('userId');
+    if (!memberToDelete) {
       return NextResponse.json({ error: 'सदस्य सापडला नाही.' }, { status: 404 });
     }
+
+    const memberEmail = (memberToDelete.userId as any)?.email?.toLowerCase().trim();
+    if (memberEmail === 'bhawanimandirwale@gmail.com') {
+      return NextResponse.json(
+        { error: 'मुख्य अध्यक्षांचे (Adhyaksh) अधिकृत खाते हटवता येत नाही.' },
+        { status: 400 }
+      );
+    }
+
+    await MandalMember.findByIdAndDelete(id);
 
     return NextResponse.json({ success: true, message: 'कार्यकर्ता यशस्वीरित्या हटवला गेला.' });
   } catch (error) {

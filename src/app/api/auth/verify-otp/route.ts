@@ -41,18 +41,19 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
+
     // Check Mandal membership
     const primaryMandal = await Mandal.findOne();
     let member = null;
     if (primaryMandal) {
       member = await MandalMember.findOne({ mandalId: primaryMandal._id, userId: user._id });
       if (!member) {
-        // Auto-assign as volunteer for the primary mandal
         member = await MandalMember.create({
           mandalId: primaryMandal._id,
           userId: user._id,
-          role: 'VOLUNTEER',
-          status: 'ACTIVE',
+          role: isAdmin ? 'ADMIN' : 'MEMBER',
+          status: isAdmin ? 'ACTIVE' : 'PENDING',
         });
       }
     }
