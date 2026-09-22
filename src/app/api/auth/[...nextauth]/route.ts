@@ -41,13 +41,25 @@ const handler = NextAuth({
 
         // Verify OTP.dev 6-digit OTP from MongoDB if provided
         if (credentials.otp) {
+          const otpCode = String(credentials.otp).trim();
           const otpRecord = await OtpToken.findOne({
-            phone: rawTenDigits,
-            otp: String(credentials.otp).trim(),
+            $or: [
+              { phone: rawTenDigits },
+              { phone: `+91${rawTenDigits}` },
+              { phone: `91${rawTenDigits}` },
+            ],
+            otp: otpCode,
           });
-          if (!otpRecord || new Date() > otpRecord.expiresAt) {
-            return null; // Invalid or expired OTP
+          if (!otpRecord) {
+            console.warn(`[NextAuth phone-otp] No matching OTP found in MongoDB for phone: ${rawTenDigits}`);
+            return null;
           }
+          if (new Date() > otpRecord.expiresAt) {
+            console.warn(`[NextAuth phone-otp] OTP expired for phone: ${rawTenDigits}`);
+            await OtpToken.deleteOne({ _id: otpRecord._id });
+            return null;
+          }
+          // Clean up valid OTP immediately
           await OtpToken.deleteOne({ _id: otpRecord._id });
         } else if (credentials.idToken && process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
           try {

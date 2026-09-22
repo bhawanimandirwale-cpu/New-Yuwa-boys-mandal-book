@@ -162,19 +162,7 @@ export default function LoginPage() {
       setLoading(true);
       setMessage(null);
 
-      // 1. Verify SMS OTP via server API
-      const verifyRes = await fetch('/api/auth/verify-sms-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, otp: otpCode }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (!verifyRes.ok) {
-        throw new Error(verifyData.error || 'अवैध किंवा कालबाह्य झालेला OTP.');
-      }
-
-      // 2. Authorize NextAuth session via phone-otp provider
+      // Authenticate directly with NextAuth via phone-otp provider (validates OTP, creates user, issues session)
       const result = await signIn('phone-otp', {
         phone: cleanPhone,
         otp: otpCode,
@@ -182,7 +170,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        throw new Error('लॉगिन सत्र तयार करताना त्रुटी आली.');
+        throw new Error('अवैध किंवा कालबाह्य झालेला OTP. कृपया पुन्हा तपासून टाका किंवा नवीन OTP मागवा.');
       }
 
       // Success celebration
@@ -193,10 +181,11 @@ export default function LoginPage() {
       });
 
       // Save client info for instant offline access
+      const isAdhyaksh = cleanPhone === '7499085045' || cleanPhone === '9923092340';
       const userObj = {
-        phone: verifyData.user?.phone || `+91${cleanPhone}`,
-        name: verifyData.user?.name || 'मंडळ कार्यकर्ता',
-        role: verifyData.user?.role || 'VOLUNTEER',
+        phone: `+91${cleanPhone}`,
+        name: isAdhyaksh ? 'पार्थ पाटील (अध्यक्ष)' : 'मंडळ कार्यकर्ता',
+        role: isAdhyaksh ? 'ADMIN' : 'VOLUNTEER',
       };
       localStorage.setItem('mandalbook_user', JSON.stringify(userObj));
       localStorage.setItem('mandalbook_role', userObj.role);
