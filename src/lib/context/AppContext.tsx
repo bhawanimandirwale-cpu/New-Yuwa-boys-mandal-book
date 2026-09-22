@@ -9,6 +9,7 @@ import {
   PermitDocumentItem,
   DonationStatus,
 } from '@/lib/types';
+import { useSession } from 'next-auth/react';
 
 interface MandalStats {
   totalCollected: number;
@@ -75,12 +76,20 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [selectedReceiptForShare, setSelectedReceiptForShare] = useState<VarganiDonationItem | null>(null);
 
+  const { data: session } = useSession();
+
   useEffect(() => {
-    const savedRole = localStorage.getItem('mandalbook_role') as UserRole;
-    if (savedRole && ['ADMIN', 'TREASURER', 'VOLUNTEER', 'MEMBER'].includes(savedRole)) {
-      setCurrentRole(savedRole);
+    const sessionRole = (session?.user as any)?.role as UserRole;
+    if (sessionRole && ['ADMIN', 'TREASURER', 'VOLUNTEER', 'MEMBER'].includes(sessionRole)) {
+      setCurrentRole(sessionRole);
+      localStorage.setItem('mandalbook_role', sessionRole);
+    } else {
+      const savedRole = localStorage.getItem('mandalbook_role') as UserRole;
+      if (savedRole && ['ADMIN', 'TREASURER', 'VOLUNTEER', 'MEMBER'].includes(savedRole)) {
+        setCurrentRole(savedRole);
+      }
     }
-  }, []);
+  }, [session]);
 
   const setRole = (role: UserRole) => {
     setCurrentRole(role);

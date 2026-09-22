@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { MandalMember } from '@/models/MandalMember';
+import { getToken } from 'next-auth/jwt';
 
 export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';
+    const token = await getToken({ req, secret });
+
+    if (token && token.role && token.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'फक्त ॲडमिनला सदस्यांची भूमिका किंवा स्थिती बदलण्याचा अधिकार आहे.' },
+        { status: 403 }
+      );
+    }
+
     const { id } = await context.params;
     const body = await req.json();
 
@@ -33,6 +44,16 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';
+    const token = await getToken({ req, secret });
+
+    if (token && token.role && token.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'फक्त ॲडमिनला सदस्य हटवण्याचा अधिकार आहे.' },
+        { status: 403 }
+      );
+    }
+
     const { id } = await context.params;
     await connectToDatabase();
 

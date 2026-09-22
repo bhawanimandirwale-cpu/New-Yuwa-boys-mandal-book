@@ -147,47 +147,58 @@ export function AppHeader() {
             )}
           </div>
 
-          {/* Role Simulation Switcher (Mandatory for testing multi-tier hierarchy) */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setRoleMenuOpen(!roleMenuOpen);
-                setYearMenuOpen(false);
-                setLangMenuOpen(false);
-              }}
-              className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all ${roleLabels[currentRole].color}`}
+          {/* Role Switcher - Only Admin can change role */}
+          {currentRole === 'ADMIN' ? (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setRoleMenuOpen(!roleMenuOpen);
+                  setYearMenuOpen(false);
+                  setLangMenuOpen(false);
+                }}
+                className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all ${roleLabels[currentRole].color}`}
+                title="भूमिका निवडा (Role Switch) - केवळ ॲडमिन"
+              >
+                <CurrentRoleIcon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{roleLabels[currentRole].title}</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {roleMenuOpen && (
+                <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 text-xs">
+                  <div className="px-3 py-1 text-[10px] uppercase font-bold text-gray-400">
+                    भूमिका निवडा (केवळ ॲडमिन)
+                  </div>
+                  {(['ADMIN', 'TREASURER', 'VOLUNTEER', 'MEMBER'] as UserRole[]).map((role) => {
+                    const ItemIcon = roleLabels[role].icon;
+                    return (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          setRole(role);
+                          setRoleMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
+                          currentRole === role ? 'bg-orange-50/70 text-saffron-700 font-bold' : 'text-gray-700'
+                        }`}
+                      >
+                        <ItemIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>{roleLabels[role].title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div
+              className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-lg border ${roleLabels[currentRole].color}`}
+              title={`आपली भूमिका: ${roleLabels[currentRole].title}`}
             >
               <CurrentRoleIcon className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{roleLabels[currentRole].title}</span>
-              <ChevronDown className="w-3 h-3" />
-            </button>
-
-            {roleMenuOpen && (
-              <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 text-xs">
-                <div className="px-3 py-1 text-[10px] uppercase font-bold text-gray-400">
-                  भूमिका निवडा (Role Switch)
-                </div>
-                {(['ADMIN', 'TREASURER', 'VOLUNTEER', 'MEMBER'] as UserRole[]).map((role) => {
-                  const ItemIcon = roleLabels[role].icon;
-                  return (
-                    <button
-                      key={role}
-                      onClick={() => {
-                        setRole(role);
-                        setRoleMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
-                        currentRole === role ? 'bg-orange-50/70 text-saffron-700 font-bold' : 'text-gray-700'
-                      }`}
-                    >
-                      <ItemIcon className="w-3.5 h-3.5 shrink-0" />
-                      <span>{roleLabels[role].title}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Language Switcher */}
           <div className="relative">

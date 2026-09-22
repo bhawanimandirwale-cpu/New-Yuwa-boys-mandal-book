@@ -62,7 +62,8 @@ const ROLE_CONFIG: Record<string, { label: string; icon: any; badgeClass: string
 };
 
 export default function MembersPage() {
-  const { mandal } = useApp();
+  const { mandal, currentRole } = useApp();
+  const isAdmin = currentRole === 'ADMIN';
 
   const [members, setMembers] = useState<MemberItem[]>([]);
   const [inviteCode, setInviteCode] = useState('NYB026');
@@ -149,6 +150,10 @@ export default function MembersPage() {
   };
 
   const handleToggleStatus = async (member: MemberItem) => {
+    if (!isAdmin) {
+      alert('फक्त ॲडमिनला स्थिती बदलण्याचा अधिकार आहे.');
+      return;
+    }
     const newStatus = member.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     try {
       const res = await fetch(`/api/members/${member.id}`, {
@@ -168,6 +173,10 @@ export default function MembersPage() {
   };
 
   const handleRoleChange = async (memberId: string, newRole: string) => {
+    if (!isAdmin) {
+      alert('फक्त ॲडमिनला भूमिका बदलण्याचा अधिकार आहे.');
+      return;
+    }
     try {
       const res = await fetch(`/api/members/${memberId}`, {
         method: 'PATCH',
@@ -217,13 +226,15 @@ export default function MembersPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-white text-saffron-700 font-extrabold text-xs sm:text-sm shadow-md hover:bg-amber-50 active:scale-95 transition-all flex items-center gap-2"
-          >
-            <UserPlus className="w-4 h-4 text-saffron-600" />
-            <span>＋ नवीन कार्यकर्ता जोडा</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setIsAddOpen(true)}
+              className="self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-white text-saffron-700 font-extrabold text-xs sm:text-sm shadow-md hover:bg-amber-50 active:scale-95 transition-all flex items-center gap-2"
+            >
+              <UserPlus className="w-4 h-4 text-saffron-600" />
+              <span>＋ नवीन कार्यकर्ता जोडा</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -414,18 +425,29 @@ export default function MembersPage() {
                     </div>
                   </div>
 
-                  {/* Role Selector */}
+                  {/* Role Selector / Badge - Only Admin can change role */}
                   <div className="shrink-0">
-                    <select
-                      value={m.role}
-                      onChange={(e) => handleRoleChange(m.id, e.target.value)}
-                      className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-saffron-500/30"
-                    >
-                      <option value="ADMIN">अध्यक्ष / ॲडमिन</option>
-                      <option value="TREASURER">खजिनदार</option>
-                      <option value="VOLUNTEER">कार्यकर्ता</option>
-                      <option value="MEMBER">सदस्य</option>
-                    </select>
+                    {isAdmin ? (
+                      <select
+                        value={m.role}
+                        onChange={(e) => handleRoleChange(m.id, e.target.value)}
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-saffron-500/30 cursor-pointer"
+                        title="भूमिका बदला (केवळ ॲडमिन)"
+                      >
+                        <option value="ADMIN">अध्यक्ष / ॲडमिन</option>
+                        <option value="TREASURER">खजिनदार</option>
+                        <option value="VOLUNTEER">कार्यकर्ता</option>
+                        <option value="MEMBER">सदस्य</option>
+                      </select>
+                    ) : (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg border ${roleInfo.badgeClass}`}
+                        title={`भूमिका: ${roleInfo.label}`}
+                      >
+                        <RoleIcon className="w-3.5 h-3.5" />
+                        <span>{roleInfo.label}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -479,17 +501,19 @@ export default function MembersPage() {
                       </a>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(m)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
-                        isSuspended
-                          ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-                          : 'border-red-200 text-red-600 hover:bg-red-50'
-                      }`}
-                    >
-                      {isSuspended ? 'सक्रिय करा' : 'निलंबित करा'}
-                    </button>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(m)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
+                          isSuspended
+                            ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
+                            : 'border-red-200 text-red-600 hover:bg-red-50'
+                        }`}
+                      >
+                        {isSuspended ? 'सक्रिय करा' : 'निलंबित करा'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
