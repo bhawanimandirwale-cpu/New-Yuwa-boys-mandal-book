@@ -18,10 +18,14 @@ import {
   Share2, 
   Sparkles,
   ArrowLeft,
-  Maximize2
+  Maximize2,
+  Copy,
+  Check,
+  Smartphone
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
+import { safeCopyToClipboard } from '@/lib/clipboard';
 
 const QUICK_AMOUNTS = [101, 251, 501, 1001, 2001, 5001];
 
@@ -56,6 +60,7 @@ export function CollectDrawer() {
   // Full-Screen UPI QR Modal
   const [showFullscreenQr, setShowFullscreenQr] = useState(false);
   const [upiQrDataUrl, setUpiQrDataUrl] = useState<string>('');
+  const [copiedUpi, setCopiedUpi] = useState(false);
 
   // Success Sheet state
   const [createdDonation, setCreatedDonation] = useState<VarganiDonationItem | null>(null);
@@ -63,27 +68,41 @@ export function CollectDrawer() {
   const phoneInputRef = useRef<HTMLInputElement>(null);
 
   const numericAmount = parseFloat(amount) || 0;
-  const upiId = process.env.NEXT_PUBLIC_DEFAULT_UPI_ID || '9923092340@ybl';
+  const upiId = mandal?.upiId || process.env.NEXT_PUBLIC_DEFAULT_UPI_ID || '9923092340@ybl';
+  const mandalName = mandal?.name || 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.';
 
-  // Generate QR code whenever amount or UPI ID changes
+  const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
+    mandalName
+  )}${numericAmount > 0 ? `&am=${numericAmount}` : ''}&cu=INR&tn=${encodeURIComponent('Ganesh Utsav Vargani')}`;
+
+  // Generate QR code whenever amount or UPI ID changes (always pre-generate so it's instantly ready)
   useEffect(() => {
-    if (numericAmount > 0) {
-      const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
-        mandal?.name || 'BhawaniMandal'
-      )}&am=${numericAmount}&cu=INR&tn=${encodeURIComponent('Ganesh Utsav Vargani')}`;
-
-      QRCode.toDataURL(upiString, {
-        width: 320,
-        margin: 1.5,
-        color: {
-          dark: '#111827',
-          light: '#FFFFFF',
-        },
+    let isMounted = true;
+    QRCode.toDataURL(upiString, {
+      width: 400,
+      margin: 1.5,
+      color: {
+        dark: '#0f172a',
+        light: '#FFFFFF',
+      },
+    })
+      .then((url) => {
+        if (isMounted) setUpiQrDataUrl(url);
       })
-        .then((url) => setUpiQrDataUrl(url))
-        .catch((err) => console.error('QR Generation failed:', err));
+      .catch((err) => console.error('QR Generation failed:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [upiString]);
+
+  const copyUpiId = async () => {
+    const success = await safeCopyToClipboard(upiId);
+    if (success) {
+      setCopiedUpi(true);
+      setTimeout(() => setCopiedUpi(false), 2000);
     }
-  }, [numericAmount, upiId, mandal]);
+  };
 
   if (!isAddDonationOpen) return null;
 
@@ -524,17 +543,14 @@ ${receiptUrl}
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setPaymentMode('UPI');
-                      setShowFullscreenQr(true);
-                    }}
+                    onClick={() => setPaymentMode('UPI')}
                     className={`py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
                       paymentMode === 'UPI'
-                        ? 'bg-white text-gray-900 shadow-sm'
+                        ? 'bg-blue-600 text-white shadow-sm'
                         : 'text-gray-500 hover:text-gray-800'
                     }`}
                   >
-                    <QrCode className="w-4 h-4 text-blue-600" />
+                    <QrCode className="w-4 h-4" />
                     <span>UPI QR</span>
                   </button>
 
@@ -553,16 +569,94 @@ ${receiptUrl}
                 </div>
               </div>
 
-              {/* UPI Quick Button if UPI Selected */}
+              {/* UPI Dynamic QR Code Container (Inline & Scannable on Mobile and Laptop) */}
               {paymentMode === 'UPI' && (
-                <button
-                  type="button"
-                  onClick={() => setShowFullscreenQr(true)}
-                  className="w-full py-2.5 px-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 font-extrabold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                  <Maximize2 className="w-4 h-4 text-blue-600" />
-                  <span>📲 दात्यासाठी फुल-स्क्रीन UPI QR कोड दाखवा (₹ {toDevanagariDigits(numericAmount)})</span>
-                </button>
+                <div className="bg-gradient-to-b from-blue-50/90 via-white to-blue-50/40 border-2 border-blue-200 rounded-2xl p-4 space-y-3.5 shadow-xs notranslate animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between border-b border-blue-100 pb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-blue-900 font-heading">
+                      <QrCode className="w-4 h-4 text-blue-600" />
+                      <span>स्कॅन करून त्वरित ₹ {toDevanagariDigits(numericAmount)} वर्गणी भरा</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      ०% फी (Direct)
+                    </span>
+                  </div>
+
+                  {/* QR Image Display */}
+                  <div className="flex flex-col items-center justify-center pt-0.5">
+                    <div className="relative p-3 bg-white rounded-2xl border-2 border-blue-300 shadow-md inline-block">
+                      {upiQrDataUrl ? (
+                        <img
+                          src={upiQrDataUrl}
+                          alt={`UPI QR Code - ₹${numericAmount}`}
+                          className="w-48 h-48 sm:w-52 sm:h-52 object-contain rounded-xl block mx-auto"
+                        />
+                      ) : (
+                        <div className="w-48 h-48 sm:w-52 sm:h-52 flex flex-col items-center justify-center text-gray-400 gap-2">
+                          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                          <span className="text-xs font-bold text-gray-500">QR कोड लोड होत आहे...</span>
+                        </div>
+                      )}
+
+                      {/* Center Rupee Badge */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-9 h-9 rounded-full bg-white shadow-md border-2 border-blue-600 flex items-center justify-center">
+                          <span className="text-blue-700 font-black text-sm font-heading">₹</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] font-bold text-gray-600 mt-2.5 flex items-center gap-1.5">
+                      <Smartphone className="w-3.5 h-3.5 text-blue-600" />
+                      <span>PhonePe • Google Pay • Paytm • BHIM</span>
+                    </div>
+                  </div>
+
+                  {/* UPI ID Info with Copy Button */}
+                  <div className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-blue-100 shadow-xs text-xs">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">UPI ID:</span>
+                      <span className="font-mono font-bold text-gray-800 text-xs truncate">{upiId}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={copyUpiId}
+                      className="ml-2 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 font-bold text-[11px] flex items-center gap-1 transition-all shrink-0"
+                    >
+                      {copiedUpi ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-emerald-700">कॉपी झाले!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>कॉपी</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* 2 Quick Helper Actions: Fullscreen & Deep-Link */}
+                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowFullscreenQr(true)}
+                      className="w-full py-2.5 px-2 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5 text-blue-600" />
+                      <span>मोठ्या पडद्यावर QR</span>
+                    </button>
+
+                    <a
+                      href={upiString}
+                      className="w-full py-2.5 px-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md shadow-blue-500/20 text-center"
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>UPI ॲपने भरा</span>
+                    </a>
+                  </div>
+                </div>
               )}
 
               {/* Submit Button (Thumb Zone bottom trigger) */}
@@ -592,12 +686,18 @@ ${receiptUrl}
 
       {/* 3. Instant Full-Screen High-Contrast UPI QR Modal */}
       {showFullscreenQr && (
-        <div className="fixed inset-0 z-60 bg-black/95 flex flex-col items-center justify-center p-4 notranslate animate-in fade-in">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center space-y-4 shadow-2xl relative">
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 notranslate animate-in fade-in"
+          onClick={() => setShowFullscreenQr(false)}
+        >
+          <div 
+            className="w-full max-w-sm bg-white rounded-3xl p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               onClick={() => setShowFullscreenQr(false)}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600"
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 active:scale-90 transition-all"
             >
               <X className="w-5 h-5" />
             </button>
@@ -607,20 +707,27 @@ ${receiptUrl}
                 ॥ श्री गणेश प्रसन्न ॥
               </div>
               <h3 className="text-base font-black text-gray-900 font-heading mt-0.5">
-                {mandal?.name || 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.'}
+                {mandalName}
               </h3>
               <p className="text-xs text-gray-500">कोणत्याही ॲपवरून स्कॅन करून वर्गणी द्या</p>
             </div>
 
             {/* Crisp High-Contrast QR Code */}
-            <div className="p-3 bg-white border-2 border-gray-900 rounded-2xl inline-block shadow-inner">
+            <div className="relative p-3 bg-white border-2 border-gray-900 rounded-2xl inline-block shadow-inner">
               {upiQrDataUrl ? (
-                <img src={upiQrDataUrl} alt="UPI QR Code" className="w-64 h-64 mx-auto rounded-lg" />
+                <img src={upiQrDataUrl} alt="UPI QR Code" className="w-64 h-64 mx-auto rounded-lg block" />
               ) : (
-                <div className="w-64 h-64 flex items-center justify-center">
+                <div className="w-64 h-64 flex flex-col items-center justify-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-saffron-600" />
+                  <span className="text-xs text-gray-400">QR कोड लोड होत आहे...</span>
                 </div>
               )}
+              {/* Center Rupee Badge */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-10 h-10 rounded-full bg-white shadow-md border-2 border-saffron-500 flex items-center justify-center">
+                  <span className="text-saffron-600 font-black text-base font-heading">₹</span>
+                </div>
+              </div>
             </div>
 
             {/* Amount Badge */}
@@ -631,15 +738,22 @@ ${receiptUrl}
               </div>
             </div>
 
-            <div className="text-[11px] font-mono text-gray-600">
-              UPI ID: <b>{upiId}</b>
+            <div className="flex items-center justify-center gap-2 text-[11px] font-mono text-gray-600 bg-gray-50 py-1.5 px-3 rounded-lg border border-gray-200">
+              <span>UPI ID: <b>{upiId}</b></span>
+              <button
+                type="button"
+                onClick={copyUpiId}
+                className="text-saffron-600 hover:text-saffron-700 font-sans font-bold text-xs"
+              >
+                {copiedUpi ? '✓ कॉपी झाले' : 'कॉपी करा'}
+              </button>
             </div>
 
             {/* Dismiss & Done Button */}
             <button
               type="button"
               onClick={() => setShowFullscreenQr(false)}
-              className="w-full py-3 rounded-xl bg-saffron-600 text-white font-extrabold text-xs shadow-md active:scale-95 transition-all"
+              className="w-full py-3.5 rounded-xl bg-saffron-600 hover:bg-saffron-700 text-white font-extrabold text-sm shadow-md active:scale-95 transition-all"
             >
               ✓ पेमेंट झाले (Done)
             </button>

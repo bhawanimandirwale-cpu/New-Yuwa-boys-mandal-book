@@ -267,7 +267,7 @@ export function DonationModal() {
           {paymentMode === 'UPI' && showUpiQr && (
             <div className="pt-1">
               <UpiQrCode
-                upiId={mandal?.upiId || 'newyuwaboys@upi'}
+                upiId={mandal?.upiId || process.env.NEXT_PUBLIC_DEFAULT_UPI_ID || '9923092340@ybl'}
                 mandalName={mandal?.name || 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.'}
                 amount={numericAmount}
                 note={`वर्गणी ${donorName || ''}`}
