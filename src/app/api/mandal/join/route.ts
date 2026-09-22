@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Mandal } from '@/models/Mandal';
-import { User } from '@/models/User';
 import { MandalMember } from '@/models/MandalMember';
+import { resolveUnifiedUser } from '@/lib/userResolver';
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,31 +35,13 @@ export async function POST(req: NextRequest) {
     const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';
     const token = await getToken({ req, secret });
     const targetEmail = (userEmail || token?.email || '').toLowerCase().trim();
+    const cleanPhone = phone?.trim() || (token as any)?.phone;
 
-    let user = null;
-    if (targetEmail) {
-      user = await User.findOne({ email: targetEmail });
-      if (!user) {
-        user = await User.create({
-          email: targetEmail,
-          name: name?.trim() || token?.name || targetEmail.split('@')[0],
-          phone: phone?.trim() || '',
-          role: 'USER',
-        });
-      } else {
-        if (name?.trim() && !user.name) user.name = name.trim();
-        if (phone?.trim() && !user.phone) user.phone = phone.trim();
-        await user.save();
-      }
-    } else if (name?.trim()) {
-      const generatedEmail = `${name.trim().toLowerCase().replace(/\s+/g, '.')}-${Date.now()}@mandalbook.local`;
-      user = await User.create({
-        name: name.trim(),
-        email: generatedEmail,
-        phone: phone?.trim() || '',
-        role: 'USER',
-      });
-    }
+    const { user } = await resolveUnifiedUser({
+      name: name?.trim() || token?.name,
+      email: targetEmail || undefined,
+      phone: cleanPhone || undefined,
+    });
 
     if (user) {
       await MandalMember.findOneAndUpdate(

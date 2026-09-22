@@ -8,12 +8,7 @@ import { Mandal } from '@/models/Mandal';
 import { MandalMember } from '@/models/MandalMember';
 import { OtpToken } from '@/models/OtpToken';
 
-function normalizePhoneNumber(input: string): string {
-  const digits = input.replace(/\D/g, '');
-  if (digits.length === 10) return `+91${digits}`;
-  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
-  return input.startsWith('+') ? input : `+${digits}`;
-}
+import { resolveUnifiedUser, normalizePhoneNumber } from '@/lib/userResolver';
 
 const handler = NextAuth({
   providers: [
@@ -80,75 +75,17 @@ const handler = NextAuth({
           }
         }
 
-        const isAdhyaksh = rawTenDigits === '7499085045' || rawTenDigits === '9923092340';
-
-        let user = await User.findOne({
-          $or: [
-            { phone: verifiedPhone },
-            { phone: rawTenDigits },
-            { phone: `+91${rawTenDigits}` },
-          ],
-        });
-
-        const mandal = await Mandal.findOne();
-
-        if (!user) {
-          user = await User.create({
-            phone: verifiedPhone,
-            name: isAdhyaksh ? 'पार्थ पाटील (अध्यक्ष)' : `कार्यकर्ता (${rawTenDigits.slice(-4)})`,
-            role: isAdhyaksh ? 'SUPER_ADMIN' : 'USER',
-            activeMandalId: mandal?._id,
-          });
-        } else if (isAdhyaksh) {
-          let updated = false;
-          if (user.role !== 'SUPER_ADMIN') {
-            user.role = 'SUPER_ADMIN';
-            updated = true;
-          }
-          if (user.name !== 'पार्थ पाटील (अध्यक्ष)') {
-            user.name = 'पार्थ पाटील (अध्यक्ष)';
-            updated = true;
-          }
-          if (updated) {
-            await user.save();
-          }
-        }
-
-        let role = isAdhyaksh ? 'ADMIN' : 'PENDING';
-        let status = isAdhyaksh ? 'ACTIVE' : 'PENDING';
-
-        if (mandal) {
-          let member = await MandalMember.findOne({ mandalId: mandal._id, userId: user._id });
-          if (!member) {
-            member = await MandalMember.create({
-              mandalId: mandal._id,
-              userId: user._id,
-              role: isAdhyaksh ? 'ADMIN' : 'VOLUNTEER',
-              status: isAdhyaksh ? 'ACTIVE' : 'PENDING',
-            });
-          } else if (isAdhyaksh && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
-            member.role = 'ADMIN';
-            member.status = 'ACTIVE';
-            await member.save();
-          }
-
-          if (isAdhyaksh) {
-            role = 'ADMIN';
-            status = 'ACTIVE';
-          } else {
-            role = member.status === 'ACTIVE' ? member.role : 'PENDING';
-            status = member.status;
-          }
-        }
+        // Unify user account (links phone & email into a single document)
+        const { user, mandal, role, status } = await resolveUnifiedUser({ phone: verifiedPhone });
 
         return {
           id: user._id.toString(),
           name: user.name,
-          phone: user.phone,
+          phone: user.phone || '',
           email: user.email || '',
           role,
           status,
-          mandalId: mandal?._id.toString(),
+          mandalId: mandal?._id?.toString(),
         } as any;
       },
     }),
@@ -178,66 +115,17 @@ const handler = NextAuth({
           await OtpToken.deleteOne({ _id: tokenRecord._id });
         }
 
-        const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
-
-        let user = await User.findOne({ email: normalizedEmail });
-        if (!user) {
-          user = await User.create({
-            email: normalizedEmail,
-            name: isAdmin ? 'पार्थ पाटील (अध्यक्ष)' : normalizedEmail.split('@')[0],
-            role: isAdmin ? 'SUPER_ADMIN' : 'USER',
-          });
-        } else if (isAdmin) {
-          let updated = false;
-          if (user.role !== 'SUPER_ADMIN') {
-            user.role = 'SUPER_ADMIN';
-            updated = true;
-          }
-          if (user.name !== 'पार्थ पाटील (अध्यक्ष)') {
-            user.name = 'पार्थ पाटील (अध्यक्ष)';
-            updated = true;
-          }
-          if (updated) {
-            await user.save();
-          }
-        }
-
-        const mandal = await Mandal.findOne();
-        let role = isAdmin ? 'ADMIN' : 'PENDING';
-        let status = isAdmin ? 'ACTIVE' : 'PENDING';
-
-        if (mandal) {
-          let member = await MandalMember.findOne({ mandalId: mandal._id, userId: user._id });
-          if (!member) {
-            member = await MandalMember.create({
-              mandalId: mandal._id,
-              userId: user._id,
-              role: isAdmin ? 'ADMIN' : 'MEMBER',
-              status: isAdmin ? 'ACTIVE' : 'PENDING',
-            });
-          } else if (isAdmin && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
-            member.role = 'ADMIN';
-            member.status = 'ACTIVE';
-            await member.save();
-          }
-
-          if (isAdmin) {
-            role = 'ADMIN';
-            status = 'ACTIVE';
-          } else {
-            role = member.status === 'ACTIVE' ? member.role : 'PENDING';
-            status = member.status;
-          }
-        }
+        // Unify user account (links phone & email into a single document)
+        const { user, mandal, role, status } = await resolveUnifiedUser({ email: normalizedEmail });
 
         return {
           id: user._id.toString(),
-          email: user.email,
+          email: user.email || '',
           name: user.name,
           phone: user.phone || '',
           role,
           status,
-          mandalId: mandal?._id.toString(),
+          mandalId: mandal?._id?.toString(),
         } as any;
       },
     }),
@@ -246,57 +134,21 @@ const handler = NextAuth({
     async signIn({ user, account }) {
       try {
         if (account?.provider === 'google' && user.email) {
-          await connectToDatabase();
           const normalizedEmail = user.email.toLowerCase().trim();
-          const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
+          // Unify user account (links phone & email into a single document)
+          const { user: dbUser } = await resolveUnifiedUser({
+            email: normalizedEmail,
+            name: user.name,
+            avatarUrl: user.image,
+          });
 
-          let dbUser = await User.findOne({ email: normalizedEmail });
-          if (!dbUser) {
-            dbUser = await User.create({
-              email: normalizedEmail,
-              name: isAdmin ? 'पार्थ पाटील (अध्यक्ष)' : (user.name || normalizedEmail.split('@')[0]),
-              avatarUrl: user.image || '',
-              role: isAdmin ? 'SUPER_ADMIN' : 'USER',
-            });
-          } else if (isAdmin) {
-            let updated = false;
-            if (dbUser.role !== 'SUPER_ADMIN') {
-              dbUser.role = 'SUPER_ADMIN';
-              updated = true;
-            }
-            if (dbUser.name !== 'पार्थ पाटील (अध्यक्ष)') {
-              dbUser.name = 'पार्थ पाटील (अध्यक्ष)';
-              updated = true;
-            }
-            if (updated) {
-              await dbUser.save();
-            }
-          }
-
-          // Crucial: assign the actual MongoDB _id to user.id so downstream callbacks get valid ObjectId
+          // Link Mongo ObjectId to user.id so downstream callbacks receive valid ObjectId
           user.id = dbUser._id.toString();
-
-          const mandal = await Mandal.findOne();
-          if (mandal) {
-            let member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
-            if (!member) {
-              await MandalMember.create({
-                mandalId: mandal._id,
-                userId: dbUser._id,
-                role: isAdmin ? 'ADMIN' : 'MEMBER',
-                status: isAdmin ? 'ACTIVE' : 'PENDING',
-              });
-            } else if (isAdmin && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
-              member.role = 'ADMIN';
-              member.status = 'ACTIVE';
-              await member.save();
-            }
-          }
         }
         return true;
       } catch (error) {
         console.error('Error in NextAuth signIn callback:', error);
-        return true; // Still allow signIn so user is not blocked with Callback error
+        return true; // Still allow signIn so user is not blocked
       }
     },
     async jwt({ token, user }) {
@@ -309,71 +161,24 @@ const handler = NextAuth({
           token.mandalId = (user as any).mandalId;
         }
 
-        await connectToDatabase();
         const normalizedEmail = (token.email || user?.email || '').toLowerCase().trim();
         const rawPhone = token.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
 
-        const isAdmin =
-          normalizedEmail === 'bhawanimandirwale@gmail.com' ||
-          rawPhone === '7499085045' ||
-          rawPhone === '9923092340';
-
-        let dbUser = null;
-
-        // 1. Search by email first (reliable for Google OAuth & Gmail OTP)
-        if (normalizedEmail) {
-          dbUser = await User.findOne({ email: normalizedEmail });
-        }
-
-        // 2. Search by valid Mongo ObjectId (guarded to prevent CastError from Google sub IDs)
-        if (!dbUser && token.id && typeof token.id === 'string' && mongoose.Types.ObjectId.isValid(token.id)) {
-          dbUser = await User.findById(token.id);
-        }
-
-        // 3. Search by Phone number
-        if (!dbUser && rawPhone) {
-          dbUser = await User.findOne({
-            $or: [{ phone: rawPhone }, { phone: `+91${rawPhone}` }],
-          });
-        }
+        // Unify & load latest role/status from DB
+        const { user: dbUser, mandal, role, status } = await resolveUnifiedUser({
+          id: token.id && mongoose.Types.ObjectId.isValid(token.id as string) ? (token.id as string) : undefined,
+          email: normalizedEmail,
+          phone: rawPhone,
+        });
 
         if (dbUser) {
           token.id = dbUser._id.toString();
-          if (dbUser.phone) token.phone = dbUser.phone;
-          if (dbUser.email) token.email = dbUser.email;
-          if (dbUser.name) token.name = dbUser.name;
-
-          const mandal = await Mandal.findOne();
-          if (mandal) {
-            token.mandalId = mandal._id.toString();
-            let member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
-
-            if (!member && !isAdmin) {
-              member = await MandalMember.create({
-                mandalId: mandal._id,
-                userId: dbUser._id,
-                role: 'MEMBER',
-                status: 'PENDING',
-              });
-            }
-
-            if (isAdmin) {
-              token.role = 'ADMIN';
-              token.status = 'ACTIVE';
-            } else if (member && member.status === 'ACTIVE') {
-              token.role = member.role;
-              token.status = 'ACTIVE';
-            } else {
-              token.role = 'PENDING';
-              token.status = member?.status || 'PENDING';
-            }
-          } else {
-            token.role = isAdmin ? 'ADMIN' : 'PENDING';
-            token.status = isAdmin ? 'ACTIVE' : 'PENDING';
-          }
-        } else if (isAdmin) {
-          token.role = 'ADMIN';
-          token.status = 'ACTIVE';
+          token.phone = dbUser.phone || '';
+          token.email = dbUser.email || '';
+          token.name = dbUser.name;
+          token.role = role;
+          token.status = status;
+          if (mandal) token.mandalId = mandal._id.toString();
         }
 
         return token;

@@ -4,6 +4,7 @@ import { Mandal } from '@/models/Mandal';
 import { User } from '@/models/User';
 import { MandalMember } from '@/models/MandalMember';
 import { Donation } from '@/models/Donation';
+import { resolveUnifiedUser } from '@/lib/userResolver';
 
 export async function GET() {
   try {
@@ -84,27 +85,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'नाव आवश्यक आहे.' }, { status: 400 });
     }
 
-    const normalizedEmail = email?.trim()?.toLowerCase() || `${name.trim().toLowerCase().replace(/\s+/g, '.')}-${Date.now()}@mandalbook.local`;
+    const normalizedEmail = email?.trim() ? email.trim().toLowerCase() : undefined;
+    const cleanPhone = phone?.trim() || undefined;
 
-    let user = await User.findOne({
-      $or: [
-        { email: normalizedEmail },
-        ...(phone ? [{ phone: phone.trim() }] : []),
-      ],
+    const { user } = await resolveUnifiedUser({
+      name: name.trim(),
+      email: normalizedEmail,
+      phone: cleanPhone,
     });
-
-    if (!user) {
-      user = await User.create({
-        name: name.trim(),
-        email: normalizedEmail,
-        phone: phone ? phone.trim() : '',
-        role: 'USER',
-      });
-    } else {
-      user.name = name.trim();
-      if (phone) user.phone = phone.trim();
-      await user.save();
-    }
 
     // Upsert membership
     const member = await MandalMember.findOneAndUpdate(

@@ -23,6 +23,16 @@ const UserSchema: Schema<IUser> = new Schema(
   { timestamps: { createdAt: true, updatedAt: true } }
 );
 
+// Ensure empty strings don't trigger sparse index collisions
+UserSchema.pre('save', function () {
+  if (this.phone === '') {
+    this.phone = undefined;
+  }
+  if (this.email === '') {
+    this.email = undefined;
+  }
+});
+
 export const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 

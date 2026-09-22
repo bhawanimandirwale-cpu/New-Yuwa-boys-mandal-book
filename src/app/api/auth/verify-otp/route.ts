@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { OtpToken } from '@/models/OtpToken';
-import { User } from '@/models/User';
-import { Mandal } from '@/models/Mandal';
-import { MandalMember } from '@/models/MandalMember';
+import { resolveUnifiedUser } from '@/lib/userResolver';
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,41 +28,18 @@ export async function POST(req: NextRequest) {
     // Delete used OTP
     await OtpToken.deleteOne({ _id: tokenRecord._id });
 
-    // Find or create user
-    let user = await User.findOne({ email: normalizedEmail });
-    if (!user) {
-      const defaultName = normalizedEmail.split('@')[0];
-      user = await User.create({
-        email: normalizedEmail,
-        name: defaultName,
-        role: 'USER',
-      });
-    }
-
-    const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
-
-    // Check Mandal membership
-    const primaryMandal = await Mandal.findOne();
-    let member = null;
-    if (primaryMandal) {
-      member = await MandalMember.findOne({ mandalId: primaryMandal._id, userId: user._id });
-      if (!member) {
-        member = await MandalMember.create({
-          mandalId: primaryMandal._id,
-          userId: user._id,
-          role: isAdmin ? 'ADMIN' : 'MEMBER',
-          status: isAdmin ? 'ACTIVE' : 'PENDING',
-        });
-      }
-    }
+    // Unify user across email and phone
+    const { user, role, status } = await resolveUnifiedUser({ email: normalizedEmail });
 
     return NextResponse.json({
       success: true,
       user: {
         id: user._id.toString(),
-        email: user.email,
+        email: user.email || '',
         name: user.name,
-        role: member ? member.role : 'MEMBER',
+        phone: user.phone || '',
+        role,
+        status,
       },
     });
   } catch (error) {

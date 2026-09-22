@@ -268,9 +268,14 @@ export default function LoginPage() {
         origin: { y: 0.6 },
       });
 
-      const userObj = { email, name: email.split('@')[0], role: 'VOLUNTEER' };
+      const isAdhyaksh = email.toLowerCase().trim() === 'bhawanimandirwale@gmail.com';
+      const userObj = {
+        email,
+        name: isAdhyaksh ? 'पार्थ पाटील (अध्यक्ष)' : email.split('@')[0],
+        role: isAdhyaksh ? 'ADMIN' : 'VOLUNTEER',
+      };
       localStorage.setItem('mandalbook_user', JSON.stringify(userObj));
-      localStorage.setItem('mandalbook_role', 'VOLUNTEER');
+      localStorage.setItem('mandalbook_role', userObj.role);
 
       const target = getCallbackUrl();
       router.push(target);
