@@ -41,9 +41,36 @@ export function ExpenseModal() {
   const [category, setCategory] = useState<ExpenseCategory>('MANDAP');
   const [amount, setAmount] = useState<string>('');
   const [paidTo, setPaidTo] = useState('');
-  const [paidBy, setPaidBy] = useState('महेश जोशी (खजिनदार)');
+  const [paidBy, setPaidBy] = useState('भूषण चौधरी (खजिनदार)');
   const [billUrl, setBillUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingBill, setUploadingBill] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingBill(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'mandalbook/expenses');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      setBillUrl(data.url);
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      alert('फोटो अपलोड करताना त्रुटी आली.');
+    } finally {
+      setUploadingBill(false);
+    }
+  };
 
   if (!isAddExpenseOpen) return null;
 
@@ -186,27 +213,43 @@ export function ExpenseModal() {
             </div>
           </div>
 
-          {/* Bill / Receipt Attachment simulation */}
+          {/* Bill / Receipt Attachment (Cloudinary) */}
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
               <Camera className="w-3.5 h-3.5 text-red-600" />
-              <span>बिलाचा फोटो किंवा लिंक (Receipt Photo)</span>
+              <span>बिलाचा फोटो (Cloudinary Direct Camera / File Upload)</span>
             </label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                placeholder="फोटो URL (उदा. Cloudinary लिंक)"
-                value={billUrl}
-                onChange={(e) => setBillUrl(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500/30"
-              />
-              <button
-                type="button"
-                onClick={() => setBillUrl('https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80')}
-                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold whitespace-nowrap"
-              >
-                नमुना बिल जोडा
-              </button>
+            <div className="space-y-2">
+              <div className="flex gap-2 items-center">
+                <label className="flex-1 cursor-pointer flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border-2 border-dashed border-red-300 hover:border-red-500 bg-red-50/50 hover:bg-red-50 transition-colors text-xs font-bold text-red-700">
+                  <Camera className="w-4 h-4" />
+                  <span>{uploadingBill ? 'क्लाउडवर अपलोड होत आहे...' : billUrl ? '✅ फोटो निवडला गेला (बदला)' : '📷 कॅमेरा / गॅलरीतून बिल निवडा'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileUpload}
+                    disabled={uploadingBill}
+                    className="hidden"
+                  />
+                </label>
+                {billUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setBillUrl('')}
+                    className="px-2.5 py-2 text-xs text-gray-500 hover:text-red-600"
+                  >
+                    काढून टाका
+                  </button>
+                )}
+              </div>
+
+              {billUrl && (
+                <div className="text-[11px] text-emerald-700 flex items-center gap-1 font-medium bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span className="truncate">Cloudinary सुरक्षित URL: {billUrl}</span>
+                </div>
+              )}
             </div>
           </div>
 

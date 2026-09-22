@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Mandal } from '@/models/Mandal';
+import { PermitDocument } from '@/models/Document';
 
 export async function GET(req: NextRequest) {
   try {
@@ -7,47 +9,60 @@ export async function GET(req: NextRequest) {
     const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : 2026;
     const category = searchParams.get('category');
 
-    const whereClause: any = { year };
+    await connectToDatabase();
+
+    const query: any = { year };
     if (category && category !== 'ALL') {
-      whereClause.category = category;
+      query.category = category;
     }
 
-    const documents = await db.permitDocument.findMany({
-      where: whereClause,
-      orderBy: { uploadedAt: 'desc' },
+    const docs = await PermitDocument.find(query).sort({ createdAt: -1 });
+
+    const formatted = docs.map((d) => {
+      const obj: any = d.toObject();
+      obj.id = d._id.toString();
+      return obj;
     });
 
-    return NextResponse.json(documents);
+    return NextResponse.json(formatted);
   } catch (error) {
-    console.error('Error fetching documents:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error fetching documents from MongoDB Atlas:', error);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    await connectToDatabase();
     const body = await req.json();
-    const mandal = await db.mandal.findFirst();
 
+    let mandal = await Mandal.findOne();
     if (!mandal) {
-      return NextResponse.json({ error: 'Mandal not found' }, { status: 404 });
+      mandal = await Mandal.create({
+        name: 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.',
+        activeYear: body.year || 2026,
+      });
     }
 
-    const newDoc = await db.permitDocument.create({
-      data: {
-        mandalId: mandal.id,
-        title: body.title,
-        category: body.category || 'OTHER',
-        fileUrl: body.fileUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80',
-        year: body.year ? parseInt(body.year) : 2026,
-        status: body.status || 'APPROVED',
-        officerNotes: body.officerNotes || null,
-      },
+    const year = body.year ? parseInt(body.year) : mandal.activeYear || 2026;
+
+    const newDoc = await PermitDocument.create({
+      mandalId: mandal._id,
+      title: body.title,
+      category: body.category || 'OTHER',
+      fileUrl: body.fileUrl || '',
+      year,
+      status: body.status || 'APPROVED',
+      officerNotes: body.officerNotes || '',
+      createdAt: new Date(),
     });
 
-    return NextResponse.json(newDoc, { status: 201 });
+    const obj: any = newDoc.toObject();
+    obj.id = newDoc._id.toString();
+
+    return NextResponse.json(obj, { status: 201 });
   } catch (error) {
-    console.error('Error creating document:', error);
-    return NextResponse.json({ error: 'Failed to upload document' }, { status: 500 });
+    console.error('Error creating document in MongoDB Atlas:', error);
+    return NextResponse.json({ error: 'Failed to save document' }, { status: 500 });
   }
 }

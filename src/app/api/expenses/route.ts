@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Mandal } from '@/models/Mandal';
+import { Expense } from '@/models/Expense';
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,77 +10,85 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category');
     const status = searchParams.get('status');
 
-    const whereClause: any = { year };
+    await connectToDatabase();
 
+    const query: any = { year };
     if (category && category !== 'ALL') {
-      whereClause.category = category;
+      query.category = category;
     }
-
     if (status && status !== 'ALL') {
-      whereClause.status = status;
+      query.status = status;
     }
 
-    const expenses = await db.expense.findMany({
-      where: whereClause,
-      orderBy: { date: 'desc' },
+    const expenses = await Expense.find(query).sort({ date: -1 });
+
+    const formatted = expenses.map((e) => {
+      const obj: any = e.toObject();
+      obj.id = e._id.toString();
+      return obj;
     });
 
-    return NextResponse.json(expenses);
+    return NextResponse.json(formatted);
   } catch (error) {
-    console.error('Error fetching expenses:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error fetching expenses from MongoDB Atlas:', error);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    await connectToDatabase();
     const body = await req.json();
-    const mandal = await db.mandal.findFirst();
 
+    let mandal = await Mandal.findOne();
     if (!mandal) {
-      return NextResponse.json({ error: 'Mandal not found' }, { status: 404 });
+      mandal = await Mandal.create({
+        name: 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.',
+        activeYear: body.year || 2026,
+      });
     }
 
-    // Auto-generate voucher number
-    const count = await db.expense.count();
-    const padded = String(count + 1).padStart(3, '0');
-    const voucherNo = `VCH-${body.year || 2026}-${padded}`;
+    const year = body.year ? parseInt(body.year) : mandal.activeYear || 2026;
 
-    const newExpense = await db.expense.create({
-      data: {
-        mandalId: mandal.id,
-        title: body.title,
-        category: body.category || 'MISC',
-        amount: parseFloat(body.amount) || 0,
-        paidTo: body.paidTo,
-        paidBy: body.paidBy,
-        billUrl: body.billUrl || null,
-        voucherNo,
-        year: body.year ? parseInt(body.year) : 2026,
-        date: body.date ? new Date(body.date) : new Date(),
-        approvedBy: body.approvedBy || null,
-        status: body.status || 'APPROVED',
-      },
+    // Sequential voucher number
+    const count = await Expense.countDocuments({ mandalId: mandal._id, year });
+    const padded = String(count + 1).padStart(3, '0');
+    const voucherNo = `VCH-${year}-${padded}`;
+
+    const numAmount = parseFloat(body.amount) || 0;
+
+    const newExpense = await Expense.create({
+      mandalId: mandal._id,
+      voucherNo,
+      title: body.title,
+      category: body.category || 'MISC',
+      amount: numAmount,
+      paidTo: body.paidTo,
+      paidBy: body.paidBy || 'भूषण चौधरी (खजिनदार)',
+      billUrl: body.billUrl || '',
+      paymentMode: body.paymentMode || 'CASH',
+      date: body.date ? new Date(body.date) : new Date(),
+      year,
+      approvedBy: body.approvedBy || 'निलेश पाटील (अध्यक्ष)',
+      status: body.status || 'APPROVED',
+      createdAt: new Date(),
     });
 
-    // If approved, deduct from mandal cash or bank
+    // Deduct from mandal cash or bank if approved
     if (newExpense.status === 'APPROVED') {
-      if (mandal.cashInHand >= newExpense.amount) {
-        await db.mandal.update({
-          where: { id: mandal.id },
-          data: { cashInHand: { decrement: newExpense.amount } },
-        });
+      if (mandal.cashInHand >= numAmount) {
+        await Mandal.findByIdAndUpdate(mandal._id, { $inc: { cashInHand: -numAmount } });
       } else {
-        await db.mandal.update({
-          where: { id: mandal.id },
-          data: { bankBalance: { decrement: newExpense.amount } },
-        });
+        await Mandal.findByIdAndUpdate(mandal._id, { $inc: { bankBalance: -numAmount } });
       }
     }
 
-    return NextResponse.json(newExpense, { status: 201 });
+    const obj: any = newExpense.toObject();
+    obj.id = newExpense._id.toString();
+
+    return NextResponse.json(obj, { status: 201 });
   } catch (error) {
-    console.error('Error creating expense:', error);
+    console.error('Error creating expense in MongoDB Atlas:', error);
     return NextResponse.json({ error: 'Failed to record expense' }, { status: 500 });
   }
 }

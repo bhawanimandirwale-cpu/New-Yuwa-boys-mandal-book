@@ -1,51 +1,84 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Mandal } from '@/models/Mandal';
+import { Donation } from '@/models/Donation';
+import { Expense } from '@/models/Expense';
+import { PermitDocument } from '@/models/Document';
 
 export async function GET() {
   try {
-    let mandal = await db.mandal.findFirst({
-      include: {
-        _count: {
-          select: {
-            donations: true,
-            expenses: true,
-            documents: true,
-            users: true,
-          },
-        },
-      },
-    });
+    await connectToDatabase();
+
+    let mandal = await Mandal.findOne();
 
     if (!mandal) {
-      return NextResponse.json({ error: 'Mandal not found' }, { status: 404 });
+      // Auto-create default primary Mandal if first launch
+      mandal = await Mandal.create({
+        name: 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.',
+        tagline: 'न्यू युवा बॉईज - भव्य सार्वजनिक गणेशोत्सव २०२६',
+        registrationNo: 'महा/केऱ्हाळे/२०२६',
+        establishedYear: 2012,
+        address: 'मेन चौक, केऱ्हाळे बुद्रुक (Kerhale Bk.)',
+        city: 'केऱ्हाळे बु.',
+        upiId: process.env.NEXT_PUBLIC_DEFAULT_UPI_ID || '9923092340@ybl',
+        helplinePhone: process.env.NEXT_PUBLIC_DEFAULT_PHONE || '7499085045',
+        activeYear: 2026,
+        inviteCode: 'NYB026',
+        cashInHand: 42500,
+        bankBalance: 125000,
+        bankName: 'स्टेट बँक ऑफ इंडिया (केऱ्हाळे शाखा)',
+        accountNumber: '३९४८२९१०३९४',
+        ifscCode: 'SBIN0001234',
+        presidentName: 'श्री. निलेश पाटील (अध्यक्ष)',
+        secretaryName: 'श्री. सचिन तायडे (सचिव)',
+        treasurerName: 'श्री. भूषण चौधरी (खजिनदार)',
+      });
     }
 
-    // Compute live financial totals
-    const donationsAgg = await db.varganiDonation.aggregate({
-      where: { mandalId: mandal.id, status: 'PAID' },
-      _sum: { amount: true },
-      _count: { id: true },
-    });
+    // Financial aggregates via MongoDB aggregation pipeline
+    const [donationsAgg] = await Donation.aggregate([
+      { $match: { mandalId: mandal._id, status: 'PAID' } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-    const pledgedAgg = await db.varganiDonation.aggregate({
-      where: { mandalId: mandal.id, status: 'PLEDGED' },
-      _sum: { amount: true },
-      _count: { id: true },
-    });
+    const [pledgedAgg] = await Donation.aggregate([
+      { $match: { mandalId: mandal._id, status: 'PLEDGED' } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-    const expensesAgg = await db.expense.aggregate({
-      where: { mandalId: mandal.id, status: 'APPROVED' },
-      _sum: { amount: true },
-      _count: { id: true },
-    });
+    const [expensesAgg] = await Expense.aggregate([
+      { $match: { mandalId: mandal._id, status: 'APPROVED' } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-    const totalCollected = donationsAgg._sum.amount || 0;
-    const totalPledged = pledgedAgg._sum.amount || 0;
-    const totalExpenses = expensesAgg._sum.amount || 0;
+    const totalCollected = donationsAgg?.total || 0;
+    const totalPledged = pledgedAgg?.total || 0;
+    const totalExpenses = expensesAgg?.total || 0;
     const netBalance = totalCollected - totalExpenses;
 
+    const mandalJson: any = mandal.toObject();
+    mandalJson.id = mandal._id.toString();
+
     return NextResponse.json({
-      mandal,
+      mandal: mandalJson,
       stats: {
         totalCollected,
         totalPledged,
@@ -53,13 +86,37 @@ export async function GET() {
         netBalance,
         cashInHand: mandal.cashInHand,
         bankBalance: mandal.bankBalance,
-        donationCount: donationsAgg._count.id,
-        pledgedCount: pledgedAgg._count.id,
-        expenseCount: expensesAgg._count.id,
+        donationCount: donationsAgg?.count || 0,
+        pledgedCount: pledgedAgg?.count || 0,
+        expenseCount: expensesAgg?.count || 0,
       },
     });
   } catch (error) {
-    console.error('Error fetching mandal data:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error('Error fetching mandal data from MongoDB Atlas:', error);
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    await connectToDatabase();
+    const body = await req.json();
+
+    const inviteCode = (body.name.substring(0, 3) + Math.floor(100 + Math.random() * 900)).toUpperCase();
+
+    const newMandal = await Mandal.create({
+      name: body.name,
+      city: body.city || 'केऱ्हाळे बु.',
+      address: body.address || 'केऱ्हाळे बुद्रुक (Kerhale Bk.)',
+      upiId: body.upiId || process.env.NEXT_PUBLIC_DEFAULT_UPI_ID || '9923092340@ybl',
+      helplinePhone: body.helplinePhone || process.env.NEXT_PUBLIC_DEFAULT_PHONE || '7499085045',
+      inviteCode,
+      activeYear: 2026,
+    });
+
+    return NextResponse.json(newMandal, { status: 201 });
+  } catch (error) {
+    console.error('Error creating mandal:', error);
+    return NextResponse.json({ error: 'Failed to create mandal' }, { status: 500 });
   }
 }

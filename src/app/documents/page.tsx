@@ -42,6 +42,33 @@ export default function DocumentsVaultPage() {
   const [category, setCategory] = useState<DocumentCategory>('POLICE');
   const [officerNotes, setOfficerNotes] = useState('');
   const [fileUrl, setFileUrl] = useState('');
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingDoc(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'mandalbook/documents');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      setFileUrl(data.url);
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      alert('कागदपत्र अपलोड करताना अडचण आली.');
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,15 +276,26 @@ export default function DocumentsVaultPage() {
 
               <div>
                 <label className="block font-bold text-gray-700 mb-1">
-                  कागदपत्र फोटो URL
+                  कागदपत्र / परवाना फोटो (Cloudinary Direct Upload)
                 </label>
-                <input
-                  type="url"
-                  placeholder="Cloudinary किंवा इमेज लिंक"
-                  value={fileUrl}
-                  onChange={(e) => setFileUrl(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs"
-                />
+                <div className="space-y-2">
+                  <label className="cursor-pointer flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border-2 border-dashed border-blue-300 hover:border-blue-500 bg-blue-50/50 hover:bg-blue-50 transition-colors text-xs font-bold text-blue-700">
+                    <span>{uploadingDoc ? 'अपलोड होत आहे...' : fileUrl ? '✅ कागदपत्र अपलोड झाले (बदला)' : '📷 कॅमेरा किंवा गॅलरीतून निवडा'}</span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      capture="environment"
+                      onChange={handleFileUpload}
+                      disabled={uploadingDoc}
+                      className="hidden"
+                    />
+                  </label>
+                  {fileUrl && (
+                    <div className="text-[10px] text-emerald-700 font-medium truncate bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
+                      Cloudinary URL: {fileUrl}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="pt-2">

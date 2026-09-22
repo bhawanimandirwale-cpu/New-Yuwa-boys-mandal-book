@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Donation } from '@/models/Donation';
+import { Mandal } from '@/models/Mandal';
+import mongoose from 'mongoose';
 
 export async function GET(
   req: NextRequest,
@@ -7,23 +10,29 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    const donation = await db.varganiDonation.findFirst({
-      where: {
-        OR: [{ id }, { receiptNo: id }],
-      },
-      include: {
-        mandal: true,
-      },
-    });
+    await connectToDatabase();
 
-    if (!donation) {
-      return NextResponse.json({ error: 'Receipt not found' }, { status: 404 });
+    const query: any = {};
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      query.$or = [{ _id: id }, { receiptNo: id }];
+    } else {
+      query.receiptNo = id;
     }
 
-    return NextResponse.json(donation);
+    const donation = await Donation.findOne(query).populate('mandalId');
+
+    if (!donation) {
+      return NextResponse.json({ error: 'पावती सापडली नाही.' }, { status: 404 });
+    }
+
+    const obj: any = donation.toObject();
+    obj.id = donation._id.toString();
+    obj.mandal = obj.mandalId;
+
+    return NextResponse.json(obj);
   } catch (error) {
     console.error('Error fetching donation:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
 
@@ -34,40 +43,33 @@ export async function PATCH(
   try {
     const { id } = await context.params;
     const body = await req.json();
+    await connectToDatabase();
 
-    const existing = await db.varganiDonation.findUnique({
-      where: { id },
-      include: { mandal: true },
-    });
-
+    const existing = await Donation.findById(id);
     if (!existing) {
       return NextResponse.json({ error: 'Donation not found' }, { status: 404 });
     }
 
-    const updated = await db.varganiDonation.update({
-      where: { id },
-      data: {
-        status: body.status || existing.status,
-        paymentMode: body.paymentMode || existing.paymentMode,
-      },
-    });
+    const wasPledged = existing.status === 'PLEDGED';
+    const newStatus = body.status || existing.status;
 
-    // If converted from PLEDGED to PAID, update mandal cash/bank
-    if (existing.status === 'PLEDGED' && updated.status === 'PAID') {
-      if (updated.paymentMode === 'CASH') {
-        await db.mandal.update({
-          where: { id: existing.mandalId },
-          data: { cashInHand: { increment: updated.amount } },
-        });
+    existing.status = newStatus;
+    if (body.paymentMode) existing.paymentMode = body.paymentMode;
+    await existing.save();
+
+    // If marked as paid, increment mandal balance
+    if (wasPledged && newStatus === 'PAID') {
+      if (existing.paymentMode === 'CASH') {
+        await Mandal.findByIdAndUpdate(existing.mandalId, { $inc: { cashInHand: existing.amount } });
       } else {
-        await db.mandal.update({
-          where: { id: existing.mandalId },
-          data: { bankBalance: { increment: updated.amount } },
-        });
+        await Mandal.findByIdAndUpdate(existing.mandalId, { $inc: { bankBalance: existing.amount } });
       }
     }
 
-    return NextResponse.json(updated);
+    const obj: any = existing.toObject();
+    obj.id = existing._id.toString();
+
+    return NextResponse.json(obj);
   } catch (error) {
     console.error('Error updating donation:', error);
     return NextResponse.json({ error: 'Failed to update donation' }, { status: 500 });
