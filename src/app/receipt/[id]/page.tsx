@@ -66,9 +66,10 @@ export default async function PublicReceiptPage({ params }: ReceiptPageProps) {
         bankName: mandal.bankName || 'स्टेट बँक ऑफ इंडिया (केऱ्हाळे शाखा)',
         accountNumber: mandal.accountNumber || '३९४८२९१०३९४',
         ifscCode: mandal.ifscCode || 'SBIN0001234',
-        presidentName: mandal.presidentName || 'श्री. निलेश पाटील (अध्यक्ष)',
+        presidentName: mandal.presidentName || 'पार्थ पाटील (अध्यक्ष)',
+        vicePresidentName: (mandal as any).vicePresidentName || 'कुश पाटील (उपअध्यक्ष)',
         secretaryName: mandal.secretaryName || 'श्री. सचिन तायडे (सचिव)',
-        treasurerName: mandal.treasurerName || 'श्री. भूषण चौधरी (खजिनदार)',
+        treasurerName: mandal.treasurerName || 'कृष्णा महाजन (खजिनदार)',
       }
     : null;
 

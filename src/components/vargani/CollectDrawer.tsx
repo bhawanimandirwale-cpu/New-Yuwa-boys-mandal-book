@@ -177,7 +177,7 @@ export function CollectDrawer() {
         paymentMode,
         isInKind: false,
         status: 'PAID',
-        collectorName: currentRole === 'ADMIN' ? 'श्री. निलेश पाटील (अध्यक्ष)' : 'कार्यकर्ता',
+        collectorName: currentRole === 'ADMIN' ? (mandal?.presidentName || 'पार्थ पाटील (अध्यक्ष)') : 'कार्यकर्ता',
         notes: notes.trim(),
         year: activeYear,
       });

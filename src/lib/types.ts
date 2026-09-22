@@ -17,6 +17,7 @@ export interface MandalInfo {
   accountNumber: string;
   ifscCode: string;
   presidentName: string;
+  vicePresidentName?: string;
   secretaryName: string;
   treasurerName: string;
 }

@@ -29,10 +29,28 @@ export async function GET() {
         bankName: 'स्टेट बँक ऑफ इंडिया (केऱ्हाळे शाखा)',
         accountNumber: '३९४८२९१०३९४',
         ifscCode: 'SBIN0001234',
-        presidentName: 'श्री. निलेश पाटील (अध्यक्ष)',
+        presidentName: 'पार्थ पाटील (अध्यक्ष)',
+        vicePresidentName: 'कुश पाटील (उपअध्यक्ष)',
         secretaryName: 'श्री. सचिन तायडे (सचिव)',
-        treasurerName: 'श्री. भूषण चौधरी (खजिनदार)',
+        treasurerName: 'कृष्णा महाजन (खजिनदार)',
       });
+    } else {
+      let needSave = false;
+      if (mandal.presidentName !== 'पार्थ पाटील (अध्यक्ष)') {
+        mandal.presidentName = 'पार्थ पाटील (अध्यक्ष)';
+        needSave = true;
+      }
+      if (mandal.vicePresidentName !== 'कुश पाटील (उपअध्यक्ष)') {
+        mandal.vicePresidentName = 'कुश पाटील (उपअध्यक्ष)';
+        needSave = true;
+      }
+      if (mandal.treasurerName !== 'कृष्णा महाजन (खजिनदार)') {
+        mandal.treasurerName = 'कृष्णा महाजन (खजिनदार)';
+        needSave = true;
+      }
+      if (needSave) {
+        await mandal.save();
+      }
     }
 
     // Financial aggregates via MongoDB aggregation pipeline
@@ -76,6 +94,9 @@ export async function GET() {
 
     const mandalJson: any = mandal.toObject();
     mandalJson.id = mandal._id.toString();
+    mandalJson.presidentName = mandal.presidentName || 'पार्थ पाटील (अध्यक्ष)';
+    mandalJson.vicePresidentName = mandal.vicePresidentName || 'कुश पाटील (उपअध्यक्ष)';
+    mandalJson.treasurerName = mandal.treasurerName || 'कृष्णा महाजन (खजिनदार)';
 
     return NextResponse.json({
       mandal: mandalJson,

@@ -141,7 +141,7 @@ export const ReceiptCard = forwardRef<HTMLDivElement, ReceiptCardProps>(
           <div className="text-right">
             <div className="text-[10px] text-gray-400">स्वाक्षरी / मोहर</div>
             <div className="text-xs font-bold text-saffron-800 font-heading">
-              {mandal?.treasurerName ? mandal.treasurerName.split(' ')[1] : 'खजिनदार'} (मंडळ खजिनदार)
+              {mandal?.treasurerName ? mandal.treasurerName.replace(/\s*\(.*?\)/, '') : 'कृष्णा महाजन'} (मंडळ खजिनदार)
             </div>
           </div>
         </div>

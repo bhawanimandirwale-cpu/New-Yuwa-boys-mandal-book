@@ -18,6 +18,7 @@ export interface IMandal extends Document {
   accountNumber?: string;
   ifscCode?: string;
   presidentName?: string;
+  vicePresidentName?: string;
   secretaryName?: string;
   treasurerName?: string;
   createdAt: Date;
@@ -42,9 +43,10 @@ const MandalSchema: Schema<IMandal> = new Schema(
     bankName: { type: String, default: 'स्टेट बँक ऑफ इंडिया (केऱ्हाळे शाखा)' },
     accountNumber: { type: String, default: '३९४८२९१०३९४' },
     ifscCode: { type: String, default: 'SBIN0001234' },
-    presidentName: { type: String, default: 'श्री. निलेश पाटील (अध्यक्ष)' },
+    presidentName: { type: String, default: 'पार्थ पाटील (अध्यक्ष)' },
+    vicePresidentName: { type: String, default: 'कुश पाटील (उपअध्यक्ष)' },
     secretaryName: { type: String, default: 'श्री. सचिन तायडे (सचिव)' },
-    treasurerName: { type: String, default: 'श्री. भूषण चौधरी (खजिनदार)' },
+    treasurerName: { type: String, default: 'कृष्णा महाजन (खजिनदार)' },
   },
   { timestamps: true }
 );

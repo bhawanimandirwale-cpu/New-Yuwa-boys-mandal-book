@@ -32,7 +32,7 @@ const ExpenseSchema: Schema<IExpense> = new Schema(
     amount: { type: Number, required: true, min: 0 },
     paidTo: { type: String, required: true, trim: true },
     paidByMemberId: { type: Schema.Types.ObjectId, ref: 'User' },
-    paidBy: { type: String, default: 'भूषण चौधरी (खजिनदार)' },
+    paidBy: { type: String, default: 'कृष्णा महाजन (खजिनदार)' },
     billUrl: { type: String, default: '' },
     paymentMode: {
       type: String,
@@ -41,7 +41,7 @@ const ExpenseSchema: Schema<IExpense> = new Schema(
     },
     date: { type: Date, default: Date.now },
     year: { type: Number, default: 2026, index: true },
-    approvedBy: { type: String, default: 'निलेश पाटील (अध्यक्ष)' },
+    approvedBy: { type: String, default: 'पार्थ पाटील (अध्यक्ष)' },
     status: {
       type: String,
       enum: ['APPROVED', 'PENDING', 'REJECTED'],

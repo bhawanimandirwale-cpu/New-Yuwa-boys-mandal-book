@@ -41,7 +41,7 @@ export function ExpenseModal() {
   const [category, setCategory] = useState<ExpenseCategory>('MANDAP');
   const [amount, setAmount] = useState<string>('');
   const [paidTo, setPaidTo] = useState('');
-  const [paidBy, setPaidBy] = useState('भूषण चौधरी (खजिनदार)');
+  const [paidBy, setPaidBy] = useState('कृष्णा महाजन (खजिनदार)');
   const [billUrl, setBillUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [uploadingBill, setUploadingBill] = useState(false);
@@ -89,7 +89,7 @@ export function ExpenseModal() {
         paidBy: paidBy.trim(),
         billUrl: billUrl.trim() || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
         status: currentRole === 'VOLUNTEER' ? 'PENDING' : 'APPROVED',
-        approvedBy: currentRole === 'ADMIN' ? 'श्री. निलेश पाटील (अध्यक्ष)' : 'श्री. भूषण चौधरी (खजिनदार)',
+        approvedBy: currentRole === 'ADMIN' ? 'पार्थ पाटील (अध्यक्ष)' : 'कृष्णा महाजन (खजिनदार)',
         year: activeYear,
       });
 
@@ -205,7 +205,7 @@ export function ExpenseModal() {
               <input
                 type="text"
                 required
-                placeholder="उदा. महेश जोशी (खजिनदार)"
+                placeholder="उदा. कृष्णा महाजन (खजिनदार)"
                 value={paidBy}
                 onChange={(e) => setPaidBy(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 transition-all font-medium"

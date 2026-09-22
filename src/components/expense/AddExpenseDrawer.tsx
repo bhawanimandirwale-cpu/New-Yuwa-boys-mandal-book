@@ -35,7 +35,8 @@ export function AddExpenseDrawer() {
     setIsAddExpenseOpen, 
     addExpense, 
     activeYear,
-    currentRole 
+    currentRole,
+    mandal 
   } = useApp();
 
   const [title, setTitle] = useState('');
@@ -146,7 +147,7 @@ export function AddExpenseDrawer() {
         category,
         amount: numericAmount,
         paidTo: paidTo.trim() || 'दुकानदार / सेवा पुरवठादार',
-        paidBy: currentRole === 'ADMIN' ? 'श्री. निलेश पाटील (अध्यक्ष)' : 'खजिनदार',
+        paidBy: currentRole === 'ADMIN' ? (mandal?.presidentName || 'पार्थ पाटील (अध्यक्ष)') : (mandal?.treasurerName || 'कृष्णा महाजन (खजिनदार)'),
         billUrl: billUrl.trim() || null,
         status: 'APPROVED',
         year: activeYear,

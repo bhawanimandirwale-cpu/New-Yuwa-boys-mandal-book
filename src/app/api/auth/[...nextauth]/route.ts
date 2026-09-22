@@ -42,12 +42,22 @@ const handler = NextAuth({
         if (!user) {
           user = await User.create({
             email: normalizedEmail,
-            name: isAdmin ? 'श्री. निलेश पाटील (अध्यक्ष)' : normalizedEmail.split('@')[0],
+            name: isAdmin ? 'पार्थ पाटील (अध्यक्ष)' : normalizedEmail.split('@')[0],
             role: isAdmin ? 'SUPER_ADMIN' : 'USER',
           });
-        } else if (isAdmin && user.role !== 'SUPER_ADMIN') {
-          user.role = 'SUPER_ADMIN';
-          await user.save();
+        } else if (isAdmin) {
+          let updated = false;
+          if (user.role !== 'SUPER_ADMIN') {
+            user.role = 'SUPER_ADMIN';
+            updated = true;
+          }
+          if (user.name !== 'पार्थ पाटील (अध्यक्ष)') {
+            user.name = 'पार्थ पाटील (अध्यक्ष)';
+            updated = true;
+          }
+          if (updated) {
+            await user.save();
+          }
         }
 
         const mandal = await Mandal.findOne();
@@ -100,13 +110,23 @@ const handler = NextAuth({
         if (!dbUser) {
           dbUser = await User.create({
             email: normalizedEmail,
-            name: isAdmin ? 'श्री. निलेश पाटील (अध्यक्ष)' : (user.name || normalizedEmail.split('@')[0]),
+            name: isAdmin ? 'पार्थ पाटील (अध्यक्ष)' : (user.name || normalizedEmail.split('@')[0]),
             avatarUrl: user.image || '',
             role: isAdmin ? 'SUPER_ADMIN' : 'USER',
           });
-        } else if (isAdmin && dbUser.role !== 'SUPER_ADMIN') {
-          dbUser.role = 'SUPER_ADMIN';
-          await dbUser.save();
+        } else if (isAdmin) {
+          let updated = false;
+          if (dbUser.role !== 'SUPER_ADMIN') {
+            dbUser.role = 'SUPER_ADMIN';
+            updated = true;
+          }
+          if (dbUser.name !== 'पार्थ पाटील (अध्यक्ष)') {
+            dbUser.name = 'पार्थ पाटील (अध्यक्ष)';
+            updated = true;
+          }
+          if (updated) {
+            await dbUser.save();
+          }
         }
 
         const mandal = await Mandal.findOne();

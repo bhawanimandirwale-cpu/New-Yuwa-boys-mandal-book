@@ -69,10 +69,10 @@ export default function ReportsPage() {
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-black text-gray-900 font-heading">
-              वार्षिक अहवाल व ऑडिट ताळेबंद (Balance Sheet)
+              वार्षिक अहवाल व आर्थिक ताळेबंद (Annual Balance Sheet)
             </h2>
             <p className="text-xs text-gray-500">
-              धर्मादाय आयुक्त (Charity Commissioner) व वार्षिक सर्वसाधारण सभा (AGM) अधिकृत ताळेबंद
+              मंडळाचा अधिकृत वार्षिक जमा-खर्च हिशोब व ताळेबंद (Annual Financial Statement)
             </p>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function ReportsPage() {
           </div>
 
           <div className="mt-3 inline-block px-4 py-1 bg-gray-100 rounded-full text-xs font-black text-gray-800 border border-gray-300">
-            सन {isMarathi ? toDevanagariDigits(activeYear) : activeYear} चा हिशोब व अंतिम लेखापरीक्षित ताळेबंद (Audited Balance Sheet)
+            सन {isMarathi ? toDevanagariDigits(activeYear) : activeYear} चा हिशोब व अंतिम वार्षिक ताळेबंद (Annual Balance Sheet)
           </div>
         </div>
 
@@ -225,14 +225,14 @@ export default function ReportsPage() {
           </span>
         </div>
 
-        {/* Signatures Block (अध्यक्ष, सचिव, खजिनदार, ऑडिटर) */}
-        <div className="mt-12 pt-6 border-t border-gray-300 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center text-xs">
+        {/* Signatures Block (अध्यक्ष, उपअध्यक्ष, खजिनदार) */}
+        <div className="mt-12 pt-6 border-t border-gray-300 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-xs">
           <div>
             <div className="h-10 border-b border-gray-400 mb-1 flex items-end justify-center font-mono text-[10px] text-gray-400">
               [स्वाक्षरी]
             </div>
-            <div className="font-bold text-gray-900 font-heading">
-              {mandal?.presidentName || 'श्री. समाधान पाटील'}
+            <div className="font-bold text-gray-900 font-heading text-sm">
+              {mandal?.presidentName || 'पार्थ पाटील'}
             </div>
             <div className="text-gray-500 text-[11px]">अध्यक्ष (President)</div>
           </div>
@@ -241,30 +241,20 @@ export default function ReportsPage() {
             <div className="h-10 border-b border-gray-400 mb-1 flex items-end justify-center font-mono text-[10px] text-gray-400">
               [स्वाक्षरी]
             </div>
-            <div className="font-bold text-gray-900 font-heading">
-              {mandal?.secretaryName || 'श्री. राहुल शिंदे'}
+            <div className="font-bold text-gray-900 font-heading text-sm">
+              {mandal?.vicePresidentName || 'कुश पाटील'}
             </div>
-            <div className="text-gray-500 text-[11px]">सचिव / कार्यवाह</div>
+            <div className="text-gray-500 text-[11px]">उपअध्यक्ष (Vice President)</div>
           </div>
 
           <div>
             <div className="h-10 border-b border-gray-400 mb-1 flex items-end justify-center font-mono text-[10px] text-gray-400">
               [स्वाक्षरी]
             </div>
-            <div className="font-bold text-gray-900 font-heading">
-              {mandal?.treasurerName || 'श्री. महेश जोशी'}
+            <div className="font-bold text-gray-900 font-heading text-sm">
+              {mandal?.treasurerName || 'कृष्णा महाजन'}
             </div>
             <div className="text-gray-500 text-[11px]">खजिनदार (Treasurer)</div>
-          </div>
-
-          <div>
-            <div className="h-10 border-b border-gray-400 mb-1 flex items-end justify-center font-mono text-[10px] text-gray-400">
-              [मोहर व सही]
-            </div>
-            <div className="font-bold text-gray-900 font-heading">
-              मे. जोशी अँड असोसिएट्स
-            </div>
-            <div className="text-gray-500 text-[11px]">सनदी लेखापाल (CA / Auditor)</div>
           </div>
         </div>
       </div>
