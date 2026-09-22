@@ -6,12 +6,130 @@ import { User } from '@/models/User';
 import { Mandal } from '@/models/Mandal';
 import { MandalMember } from '@/models/MandalMember';
 
+function normalizePhoneNumber(input: string): string {
+  const digits = input.replace(/\D/g, '');
+  if (digits.length === 10) return `+91${digits}`;
+  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
+  return input.startsWith('+') ? input : `+${digits}`;
+}
+
 const handler = NextAuth({
   providers: [
+    // 1. Google OAuth 2.0 Provider (1-Click)
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
+
+    // 2. Mobile Phone SMS OTP Provider (Firebase Phone Auth)
+    CredentialsProvider({
+      id: 'phone-otp',
+      name: 'Phone SMS OTP',
+      credentials: {
+        phone: { label: 'Phone', type: 'text' },
+        idToken: { label: 'Firebase ID Token', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.phone) return null;
+
+        await connectToDatabase();
+        let verifiedPhone = normalizePhoneNumber(credentials.phone);
+
+        // Optionally verify Firebase idToken via Google Identity Toolkit
+        if (credentials.idToken && process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+          try {
+            const verifyRes = await fetch(
+              `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken: credentials.idToken }),
+              }
+            );
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.users?.[0]?.phoneNumber) {
+              verifiedPhone = normalizePhoneNumber(verifyData.users[0].phoneNumber);
+            }
+          } catch (err) {
+            console.warn('Firebase token lookup warning in authorize:', err);
+          }
+        }
+
+        const rawTenDigits = verifiedPhone.replace(/\D/g, '').slice(-10);
+        const isAdhyaksh = rawTenDigits === '7499085045' || rawTenDigits === '9923092340';
+
+        let user = await User.findOne({
+          $or: [
+            { phone: verifiedPhone },
+            { phone: rawTenDigits },
+            { phone: `+91${rawTenDigits}` },
+          ],
+        });
+
+        const mandal = await Mandal.findOne();
+
+        if (!user) {
+          user = await User.create({
+            phone: verifiedPhone,
+            name: isAdhyaksh ? 'पार्थ पाटील (अध्यक्ष)' : `कार्यकर्ता (${rawTenDigits.slice(-4)})`,
+            role: isAdhyaksh ? 'SUPER_ADMIN' : 'USER',
+            activeMandalId: mandal?._id,
+          });
+        } else if (isAdhyaksh) {
+          let updated = false;
+          if (user.role !== 'SUPER_ADMIN') {
+            user.role = 'SUPER_ADMIN';
+            updated = true;
+          }
+          if (user.name !== 'पार्थ पाटील (अध्यक्ष)') {
+            user.name = 'पार्थ पाटील (अध्यक्ष)';
+            updated = true;
+          }
+          if (updated) {
+            await user.save();
+          }
+        }
+
+        let role = isAdhyaksh ? 'ADMIN' : 'PENDING';
+        let status = isAdhyaksh ? 'ACTIVE' : 'PENDING';
+
+        if (mandal) {
+          let member = await MandalMember.findOne({ mandalId: mandal._id, userId: user._id });
+          if (!member) {
+            member = await MandalMember.create({
+              mandalId: mandal._id,
+              userId: user._id,
+              role: isAdhyaksh ? 'ADMIN' : 'VOLUNTEER',
+              status: isAdhyaksh ? 'ACTIVE' : 'PENDING',
+            });
+          } else if (isAdhyaksh && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
+            member.role = 'ADMIN';
+            member.status = 'ACTIVE';
+            await member.save();
+          }
+
+          if (isAdhyaksh) {
+            role = 'ADMIN';
+            status = 'ACTIVE';
+          } else {
+            role = member.status === 'ACTIVE' ? member.role : 'PENDING';
+            status = member.status;
+          }
+        }
+
+        return {
+          id: user._id.toString(),
+          name: user.name,
+          phone: user.phone,
+          email: user.email || '',
+          role,
+          status,
+          mandalId: mandal?._id.toString(),
+        } as any;
+      },
+    }),
+
+    // 3. Gmail Email OTP Provider
     CredentialsProvider({
       id: 'credentials',
       name: 'Gmail OTP',
@@ -92,6 +210,7 @@ const handler = NextAuth({
           id: user._id.toString(),
           email: user.email,
           name: user.name,
+          phone: user.phone || '',
           role,
           status,
           mandalId: mandal?._id.toString(),
@@ -148,41 +267,69 @@ const handler = NextAuth({
       }
       return true;
     },
-    async jwt({ token }) {
-      if (token.email) {
-        await connectToDatabase();
-        const normalizedEmail = token.email.toLowerCase().trim();
-        const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role || 'PENDING';
+        token.status = (user as any).status || 'PENDING';
+        token.phone = (user as any).phone || '';
+        token.mandalId = (user as any).mandalId;
+      }
 
-        const dbUser = await User.findOne({ email: normalizedEmail });
-        if (dbUser) {
-          token.id = dbUser._id.toString();
-          const mandal = await Mandal.findOne();
-          if (mandal) {
-            token.mandalId = mandal._id.toString();
-            const member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
+      await connectToDatabase();
+      const normalizedEmail = token.email ? token.email.toLowerCase().trim() : '';
+      const rawPhone = token.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
 
-            if (isAdmin) {
-              token.role = 'ADMIN';
-              token.status = 'ACTIVE';
-            } else if (member && member.status === 'ACTIVE') {
-              token.role = member.role;
-              token.status = 'ACTIVE';
-            } else {
-              token.role = 'PENDING';
-              token.status = member?.status || 'PENDING';
-            }
+      const isAdmin =
+        normalizedEmail === 'bhawanimandirwale@gmail.com' ||
+        rawPhone === '7499085045' ||
+        rawPhone === '9923092340';
+
+      let dbUser = null;
+      if (token.id) {
+        dbUser = await User.findById(token.id);
+      }
+      if (!dbUser && normalizedEmail) {
+        dbUser = await User.findOne({ email: normalizedEmail });
+      }
+      if (!dbUser && rawPhone) {
+        dbUser = await User.findOne({
+          $or: [{ phone: rawPhone }, { phone: `+91${rawPhone}` }],
+        });
+      }
+
+      if (dbUser) {
+        token.id = dbUser._id.toString();
+        if (dbUser.phone) token.phone = dbUser.phone;
+        if (dbUser.email) token.email = dbUser.email;
+
+        const mandal = await Mandal.findOne();
+        if (mandal) {
+          token.mandalId = mandal._id.toString();
+          const member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
+
+          if (isAdmin) {
+            token.role = 'ADMIN';
+            token.status = 'ACTIVE';
+          } else if (member && member.status === 'ACTIVE') {
+            token.role = member.role;
+            token.status = 'ACTIVE';
           } else {
-            token.role = isAdmin ? 'ADMIN' : 'PENDING';
-            token.status = isAdmin ? 'ACTIVE' : 'PENDING';
+            token.role = 'PENDING';
+            token.status = member?.status || 'PENDING';
           }
+        } else {
+          token.role = isAdmin ? 'ADMIN' : 'PENDING';
+          token.status = isAdmin ? 'ACTIVE' : 'PENDING';
         }
       }
+
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         (session.user as any).id = token.id || token.sub;
+        (session.user as any).phone = token.phone || '';
         (session.user as any).role = token.role || 'PENDING';
         (session.user as any).status = token.status || 'PENDING';
         (session.user as any).mandalId = token.mandalId;

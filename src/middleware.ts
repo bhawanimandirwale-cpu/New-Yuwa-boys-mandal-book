@@ -29,7 +29,12 @@ export async function middleware(req: NextRequest) {
     // If authenticated user visits /login
     if (token && pathname === '/login') {
       const normalizedEmail = token?.email?.toLowerCase().trim();
-      const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com' || token?.role === 'ADMIN';
+      const rawPhone = token?.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
+      const isAdmin =
+        normalizedEmail === 'bhawanimandirwale@gmail.com' ||
+        rawPhone === '7499085045' ||
+        rawPhone === '9923092340' ||
+        token?.role === 'ADMIN';
       const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
       if (isAdmin || isActiveMember) {
         return NextResponse.redirect(new URL('/', req.url));
@@ -73,7 +78,12 @@ export async function middleware(req: NextRequest) {
   // 6. Strict Mandal Admission Gate:
   // Must be Adhyaksh (bhawanimandirwale@gmail.com / ADMIN) OR have Adhyaksh approval / valid Mandal Code
   const normalizedEmail = token?.email?.toLowerCase().trim();
-  const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com' || token?.role === 'ADMIN';
+  const rawPhone = token?.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
+  const isAdmin =
+    normalizedEmail === 'bhawanimandirwale@gmail.com' ||
+    rawPhone === '7499085045' ||
+    rawPhone === '9923092340' ||
+    token?.role === 'ADMIN';
   const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
 
   if (!isAdmin && !isActiveMember) {
