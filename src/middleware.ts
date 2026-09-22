@@ -11,7 +11,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/static') ||
     pathname === '/favicon.ico' ||
     pathname === '/icon.svg' ||
-    pathname === '/manifest.json'
+    pathname === '/manifest.json' ||
+    pathname === '/sw.js'
   ) {
     return NextResponse.next();
   }
@@ -97,8 +98,8 @@ export const config = {
      * Match all request paths except for static files:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico, icon.svg, manifest.json
+     * - favicon.ico, icon.svg, manifest.json, sw.js
      */
-    '/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.json).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon.svg|manifest.json|sw.js).*)',
   ],
 };
