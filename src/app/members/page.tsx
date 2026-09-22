@@ -21,7 +21,8 @@ import {
   MoreVertical,
   X,
   MessageCircle,
-  Award
+  Award,
+  Clock
 } from 'lucide-react';
 
 interface MemberItem {
@@ -32,7 +33,7 @@ interface MemberItem {
   phone: string;
   avatarUrl: string;
   role: 'ADMIN' | 'TREASURER' | 'VOLUNTEER' | 'MEMBER';
-  status: 'ACTIVE' | 'INVITED' | 'SUSPENDED';
+  status: 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'PENDING';
   joinedAt: string;
   totalCollected: number;
   receiptCount: number;
@@ -151,20 +152,21 @@ export default function MembersPage() {
 
   const handleToggleStatus = async (member: MemberItem) => {
     if (!isAdmin) {
-      alert('फक्त ॲडमिनला स्थिती बदलण्याचा अधिकार आहे.');
+      alert('फक्त अध्यक्षांना (Adhyaksh) स्थिती बदलण्याचा अधिकार आहे.');
       return;
     }
     const newStatus = member.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    const newRole = member.status === 'PENDING' && member.role === 'MEMBER' ? 'VOLUNTEER' : member.role;
     try {
       const res = await fetch(`/api/members/${member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, role: newRole }),
       });
 
       if (res.ok) {
         setMembers((prev) =>
-          prev.map((m) => (m.id === member.id ? { ...m, status: newStatus } : m))
+          prev.map((m) => (m.id === member.id ? { ...m, status: newStatus, role: newRole } : m))
         );
       }
     } catch (err) {
@@ -380,12 +382,17 @@ export default function MembersPage() {
             const roleInfo = ROLE_CONFIG[m.role] || ROLE_CONFIG.VOLUNTEER;
             const RoleIcon = roleInfo.icon;
             const isSuspended = m.status === 'SUSPENDED';
+            const isPending = m.status === 'PENDING';
 
             return (
               <div
                 key={m.id}
                 className={`bg-white rounded-2xl border p-4 shadow-sm transition-all relative ${
-                  isSuspended ? 'border-gray-300 opacity-60 bg-gray-50/50' : 'border-gray-200 hover:shadow-md'
+                  isPending
+                    ? 'border-amber-300 bg-amber-50/20 shadow-amber-500/5'
+                    : isSuspended
+                    ? 'border-gray-300 opacity-60 bg-gray-50/50'
+                    : 'border-gray-200 hover:shadow-md'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -404,6 +411,11 @@ export default function MembersPage() {
                           <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-extrabold flex items-center gap-0.5">
                             <Award className="w-3 h-3 text-amber-600" />
                             <span>टॉप वसुली</span>
+                          </span>
+                        )}
+                        {isPending && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-extrabold border border-amber-300">
+                            प्रवेश मंजुरी बाकी
                           </span>
                         )}
                       </div>
@@ -472,10 +484,19 @@ export default function MembersPage() {
                 <div className="mt-3 flex items-center justify-between gap-2 pt-2 text-xs">
                   <span
                     className={`inline-flex items-center gap-1 font-bold text-[11px] ${
-                      isSuspended ? 'text-gray-400' : 'text-emerald-700'
+                      isPending
+                        ? 'text-amber-800'
+                        : isSuspended
+                        ? 'text-gray-400'
+                        : 'text-emerald-700'
                     }`}
                   >
-                    {isSuspended ? (
+                    {isPending ? (
+                      <>
+                        <Clock className="w-3.5 h-3.5 text-amber-600" />
+                        <span>मंजुरी बाकी</span>
+                      </>
+                    ) : isSuspended ? (
                       <>
                         <XCircle className="w-3.5 h-3.5 text-gray-400" />
                         <span>निलंबित</span>
@@ -505,13 +526,15 @@ export default function MembersPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(m)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
-                          isSuspended
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors ${
+                          isPending
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-extrabold'
+                            : isSuspended
                             ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
                             : 'border-red-200 text-red-600 hover:bg-red-50'
                         }`}
                       >
-                        {isSuspended ? 'सक्रिय करा' : 'निलंबित करा'}
+                        {isPending ? '✓ मंजूर करा' : isSuspended ? 'सक्रिय करा' : 'निलंबित करा'}
                       </button>
                     )}
                   </div>

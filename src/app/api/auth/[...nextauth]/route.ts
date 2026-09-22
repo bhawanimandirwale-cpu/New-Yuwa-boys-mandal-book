@@ -36,28 +36,46 @@ const handler = NextAuth({
           await OtpToken.deleteOne({ _id: tokenRecord._id });
         }
 
+        const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
+
         let user = await User.findOne({ email: normalizedEmail });
         if (!user) {
           user = await User.create({
             email: normalizedEmail,
-            name: normalizedEmail.split('@')[0],
-            role: 'USER',
+            name: isAdmin ? 'श्री. निलेश पाटील (अध्यक्ष)' : normalizedEmail.split('@')[0],
+            role: isAdmin ? 'SUPER_ADMIN' : 'USER',
           });
+        } else if (isAdmin && user.role !== 'SUPER_ADMIN') {
+          user.role = 'SUPER_ADMIN';
+          await user.save();
         }
 
         const mandal = await Mandal.findOne();
-        let role = 'VOLUNTEER';
+        let role = isAdmin ? 'ADMIN' : 'PENDING';
+        let status = isAdmin ? 'ACTIVE' : 'PENDING';
+
         if (mandal) {
           let member = await MandalMember.findOne({ mandalId: mandal._id, userId: user._id });
           if (!member) {
             member = await MandalMember.create({
               mandalId: mandal._id,
               userId: user._id,
-              role: 'VOLUNTEER',
-              status: 'ACTIVE',
+              role: isAdmin ? 'ADMIN' : 'MEMBER',
+              status: isAdmin ? 'ACTIVE' : 'PENDING',
             });
+          } else if (isAdmin && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
+            member.role = 'ADMIN';
+            member.status = 'ACTIVE';
+            await member.save();
           }
-          role = member.role;
+
+          if (isAdmin) {
+            role = 'ADMIN';
+            status = 'ACTIVE';
+          } else {
+            role = member.status === 'ACTIVE' ? member.role : 'PENDING';
+            status = member.status;
+          }
         }
 
         return {
@@ -65,6 +83,7 @@ const handler = NextAuth({
           email: user.email,
           name: user.name,
           role,
+          status,
           mandalId: mandal?._id.toString(),
         } as any;
       },
@@ -75,15 +94,19 @@ const handler = NextAuth({
       if (account?.provider === 'google' && user.email) {
         await connectToDatabase();
         const normalizedEmail = user.email.toLowerCase().trim();
-        let dbUser = await User.findOne({ email: normalizedEmail });
+        const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
 
+        let dbUser = await User.findOne({ email: normalizedEmail });
         if (!dbUser) {
           dbUser = await User.create({
             email: normalizedEmail,
-            name: user.name || normalizedEmail.split('@')[0],
+            name: isAdmin ? 'श्री. निलेश पाटील (अध्यक्ष)' : (user.name || normalizedEmail.split('@')[0]),
             avatarUrl: user.image || '',
-            role: 'USER',
+            role: isAdmin ? 'SUPER_ADMIN' : 'USER',
           });
+        } else if (isAdmin && dbUser.role !== 'SUPER_ADMIN') {
+          dbUser.role = 'SUPER_ADMIN';
+          await dbUser.save();
         }
 
         const mandal = await Mandal.findOne();
@@ -93,29 +116,45 @@ const handler = NextAuth({
             await MandalMember.create({
               mandalId: mandal._id,
               userId: dbUser._id,
-              role: 'VOLUNTEER',
-              status: 'ACTIVE',
+              role: isAdmin ? 'ADMIN' : 'MEMBER',
+              status: isAdmin ? 'ACTIVE' : 'PENDING',
             });
+          } else if (isAdmin && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
+            member.role = 'ADMIN';
+            member.status = 'ACTIVE';
+            await member.save();
           }
         }
       }
       return true;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role || 'VOLUNTEER';
-        token.mandalId = (user as any).mandalId;
-      } else if (!token.role && token.email) {
+    async jwt({ token }) {
+      if (token.email) {
         await connectToDatabase();
-        const dbUser = await User.findOne({ email: token.email });
+        const normalizedEmail = token.email.toLowerCase().trim();
+        const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
+
+        const dbUser = await User.findOne({ email: normalizedEmail });
         if (dbUser) {
           token.id = dbUser._id.toString();
           const mandal = await Mandal.findOne();
           if (mandal) {
             token.mandalId = mandal._id.toString();
             const member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
-            token.role = member ? member.role : 'VOLUNTEER';
+
+            if (isAdmin) {
+              token.role = 'ADMIN';
+              token.status = 'ACTIVE';
+            } else if (member && member.status === 'ACTIVE') {
+              token.role = member.role;
+              token.status = 'ACTIVE';
+            } else {
+              token.role = 'PENDING';
+              token.status = member?.status || 'PENDING';
+            }
+          } else {
+            token.role = isAdmin ? 'ADMIN' : 'PENDING';
+            token.status = isAdmin ? 'ACTIVE' : 'PENDING';
           }
         }
       }
@@ -124,7 +163,8 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (session?.user) {
         (session.user as any).id = token.id || token.sub;
-        (session.user as any).role = token.role || 'VOLUNTEER';
+        (session.user as any).role = token.role || 'PENDING';
+        (session.user as any).status = token.status || 'PENDING';
         (session.user as any).mandalId = token.mandalId;
       }
       return session;

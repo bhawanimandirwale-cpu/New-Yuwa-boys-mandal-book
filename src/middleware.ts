@@ -25,9 +25,16 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/join')
   ) {
     const token = await getToken({ req, secret });
-    // If authenticated user visits /login, redirect to /
+    // If authenticated user visits /login
     if (token && pathname === '/login') {
-      return NextResponse.redirect(new URL('/', req.url));
+      const normalizedEmail = token?.email?.toLowerCase().trim();
+      const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com' || token?.role === 'ADMIN';
+      const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
+      if (isAdmin || isActiveMember) {
+        return NextResponse.redirect(new URL('/', req.url));
+      } else {
+        return NextResponse.redirect(new URL('/join?pending=true', req.url));
+      }
     }
     return NextResponse.next();
   }
@@ -60,6 +67,25 @@ export async function middleware(req: NextRequest) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // 6. Strict Mandal Admission Gate:
+  // Must be Adhyaksh (bhawanimandirwale@gmail.com / ADMIN) OR have Adhyaksh approval / valid Mandal Code
+  const normalizedEmail = token?.email?.toLowerCase().trim();
+  const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com' || token?.role === 'ADMIN';
+  const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
+
+  if (!isAdmin && !isActiveMember) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'मंडळात प्रवेश नाकारला: मंडळात प्रवेश करण्यासाठी अधिकृत मंडळ कोड किंवा अध्यक्षांची मंजुरी आवश्यक आहे.' },
+        { status: 403 }
+      );
+    }
+
+    const joinUrl = new URL('/join', req.url);
+    joinUrl.searchParams.set('pending', 'true');
+    return NextResponse.redirect(joinUrl);
   }
 
   return NextResponse.next();

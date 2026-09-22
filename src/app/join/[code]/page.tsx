@@ -25,14 +25,14 @@ export default function JoinMandalPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch('/api/members', {
+      const res = await fetch('/api/mandal/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          inviteCode: code.toUpperCase(),
           name: name.trim(),
           phone: phone.trim(),
-          email: email.trim(),
-          role: 'VOLUNTEER',
+          userEmail: email.trim(),
         }),
       });
 

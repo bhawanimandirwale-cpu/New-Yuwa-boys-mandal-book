@@ -4,7 +4,7 @@ export interface IMandalMember extends Document {
   mandalId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   role: 'ADMIN' | 'TREASURER' | 'VOLUNTEER' | 'MEMBER';
-  status: 'ACTIVE' | 'INVITED' | 'SUSPENDED';
+  status: 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'PENDING';
   joinedAt: Date;
 }
 
@@ -19,8 +19,8 @@ const MandalMemberSchema: Schema<IMandalMember> = new Schema(
     },
     status: {
       type: String,
-      enum: ['ACTIVE', 'INVITED', 'SUSPENDED'],
-      default: 'ACTIVE',
+      enum: ['ACTIVE', 'INVITED', 'SUSPENDED', 'PENDING'],
+      default: 'PENDING',
     },
     joinedAt: { type: Date, default: Date.now },
   },

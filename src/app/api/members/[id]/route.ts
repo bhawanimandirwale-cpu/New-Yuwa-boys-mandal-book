@@ -10,10 +10,11 @@ export async function PATCH(
   try {
     const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';
     const token = await getToken({ req, secret });
+    const isAdmin = token?.email?.toLowerCase().trim() === 'bhawanimandirwale@gmail.com' || token?.role === 'ADMIN';
 
-    if (token && token.role && token.role !== 'ADMIN') {
+    if (!isAdmin) {
       return NextResponse.json(
-        { error: 'फक्त ॲडमिनला सदस्यांची भूमिका किंवा स्थिती बदलण्याचा अधिकार आहे.' },
+        { error: 'फक्त अध्यक्षांना (Adhyaksh) सदस्यांची भूमिका किंवा स्थिती बदलण्याचा अधिकार आहे.' },
         { status: 403 }
       );
     }
@@ -46,10 +47,11 @@ export async function DELETE(
   try {
     const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';
     const token = await getToken({ req, secret });
+    const isAdmin = token?.email?.toLowerCase().trim() === 'bhawanimandirwale@gmail.com' || token?.role === 'ADMIN';
 
-    if (token && token.role && token.role !== 'ADMIN') {
+    if (!isAdmin) {
       return NextResponse.json(
-        { error: 'फक्त ॲडमिनला सदस्य हटवण्याचा अधिकार आहे.' },
+        { error: 'फक्त अध्यक्षांना (Adhyaksh) सदस्य हटवण्याचा अधिकार आहे.' },
         { status: 403 }
       );
     }
