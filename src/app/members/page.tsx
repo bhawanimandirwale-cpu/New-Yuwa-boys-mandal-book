@@ -40,7 +40,7 @@ interface MemberItem {
 
 const ROLE_CONFIG: Record<string, { label: string; icon: any; badgeClass: string }> = {
   ADMIN: {
-    label: 'अध्यक्ष / ॲडमिन',
+    label: 'अध्यक्ष',
     icon: ShieldAlert,
     badgeClass: 'bg-red-50 text-red-700 border-red-200',
   },
@@ -434,7 +434,7 @@ export default function MembersPage() {
                         className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-saffron-500/30 cursor-pointer"
                         title="भूमिका बदला (केवळ ॲडमिन)"
                       >
-                        <option value="ADMIN">अध्यक्ष / ॲडमिन</option>
+                        <option value="ADMIN">अध्यक्ष (Adhyaksh - सर्व अधिकार)</option>
                         <option value="TREASURER">खजिनदार</option>
                         <option value="VOLUNTEER">कार्यकर्ता</option>
                         <option value="MEMBER">सदस्य</option>
@@ -594,7 +594,7 @@ export default function MembersPage() {
                 >
                   <option value="VOLUNTEER">कार्यकर्ता (Field Collector - वर्गणी पावती अधिकार)</option>
                   <option value="TREASURER">खजिनदार (Treasurer - खर्च मंजूरी व संपूर्ण ताळेबंद)</option>
-                  <option value="ADMIN">अध्यक्ष / ॲडमिन (Admin - सर्व अधिकार)</option>
+                  <option value="ADMIN">अध्यक्ष (Adhyaksh - मंडळ प्रमुख व सर्व अधिकार)</option>
                   <option value="MEMBER">सदस्य (General Member - फक्त पाहण्याचा अधिकार)</option>
                 </select>
               </div>

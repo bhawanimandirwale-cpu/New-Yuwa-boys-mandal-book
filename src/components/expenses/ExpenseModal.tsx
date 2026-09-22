@@ -89,7 +89,7 @@ export function ExpenseModal() {
         paidBy: paidBy.trim(),
         billUrl: billUrl.trim() || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
         status: currentRole === 'VOLUNTEER' ? 'PENDING' : 'APPROVED',
-        approvedBy: currentRole === 'ADMIN' ? 'समाधान पाटील (अध्यक्ष)' : 'महेश जोशी (खजिनदार)',
+        approvedBy: currentRole === 'ADMIN' ? 'श्री. निलेश पाटील (अध्यक्ष)' : 'श्री. भूषण चौधरी (खजिनदार)',
         year: activeYear,
       });
 
