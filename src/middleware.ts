@@ -16,13 +16,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';
+
   // 2. Whitelist public pages
   if (
     pathname === '/login' ||
     pathname.startsWith('/receipt') ||
     pathname.startsWith('/join')
   ) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    const token = await getToken({ req, secret });
     // If authenticated user visits /login, redirect to /
     if (token && pathname === '/login') {
       return NextResponse.redirect(new URL('/', req.url));
@@ -43,7 +45,7 @@ export async function middleware(req: NextRequest) {
   // 4. Check NextAuth JWT token
   const token = await getToken({
     req,
-    secret: process.env.NEXTAUTH_SECRET,
+    secret,
   });
 
   const isAuthenticated = Boolean(token);
