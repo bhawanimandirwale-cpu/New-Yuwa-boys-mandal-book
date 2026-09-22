@@ -21,8 +21,6 @@ export default function ReportsPage() {
   const { mandal, stats, donations, expenses, activeYear, currentRole, setIsResetAccountsOpen } = useApp();
   const { isMarathi } = useI18n();
 
-  const [copiedDaily, setCopiedDaily] = useState(false);
-
   const mandalName = mandal?.name || 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.';
 
   // Group approved expenses by category

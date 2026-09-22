@@ -16,6 +16,7 @@ import {
   RotateCcw 
 } from 'lucide-react';
 import Link from 'next/link';
+import { safeCopyToClipboard } from '@/lib/clipboard';
 
 export function QuickActions() {
   const { 
@@ -50,15 +51,17 @@ ${typeof window !== 'undefined' ? window.location.origin : 'https://mandalbook.c
 
 - व्यवस्थापक व खजिनदार मंडळ`;
 
-  const copyBroadcastText = () => {
-    navigator.clipboard.writeText(broadcastText);
-    setCopiedBroadcast(true);
-    setTimeout(() => setCopiedBroadcast(false), 2500);
+  const copyBroadcastText = async () => {
+    const success = await safeCopyToClipboard(broadcastText);
+    if (success) {
+      setCopiedBroadcast(true);
+      setTimeout(() => setCopiedBroadcast(false), 2500);
+    }
   };
 
   const shareOnWhatsApp = () => {
     const url = `https://wa.me/?text=${encodeURIComponent(broadcastText)}`;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (

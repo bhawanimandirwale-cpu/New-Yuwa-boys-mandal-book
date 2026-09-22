@@ -456,7 +456,12 @@ ${receiptUrl}
                     min="1"
                     placeholder="रक्कम टाका"
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0) {
+                        setAmount(val);
+                      }
+                    }}
                     className="w-full pl-9 pr-3 py-1.5 rounded-xl border-2 border-saffron-300 focus:border-saffron-600 focus:outline-none text-2xl font-black text-saffron-800 font-heading bg-saffron-50/20"
                   />
                 </div>

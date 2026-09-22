@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { formatCurrencyINR, toDevanagariDigits } from '@/lib/formatters';
+import { safeCopyToClipboard } from '@/lib/clipboard';
 import { Copy, Check, QrCode as QrIcon, Smartphone } from 'lucide-react';
 
 interface UpiQrCodeProps {
@@ -41,10 +42,12 @@ export function UpiQrCode({ upiId, mandalName, amount, note = 'वर्गण�
     }
   }, [upiUrl]);
 
-  const copyUpiId = () => {
-    navigator.clipboard.writeText(upiId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyUpiId = async () => {
+    const success = await safeCopyToClipboard(upiId);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (

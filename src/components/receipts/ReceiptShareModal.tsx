@@ -17,6 +17,7 @@ import {
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import confetti from 'canvas-confetti';
+import { safeCopyToClipboard } from '@/lib/clipboard';
 
 export function ReceiptShareModal() {
   const { selectedReceiptForShare, setSelectedReceiptForShare, mandal } = useApp();
@@ -112,10 +113,12 @@ ${receiptUrl}
     }
   };
 
-  const handleCopyText = () => {
-    navigator.clipboard.writeText(whatsappMessage);
-    setCopiedText(true);
-    setTimeout(() => setCopiedText(false), 2000);
+  const handleCopyText = async () => {
+    const success = await safeCopyToClipboard(whatsappMessage);
+    if (success) {
+      setCopiedText(true);
+      setTimeout(() => setCopiedText(false), 2000);
+    }
   };
 
   return (

@@ -7,7 +7,7 @@ import { formatCurrencyINR, toDevanagariDigits } from '@/lib/formatters';
 import { Trophy, Crown, Medal, Award, Sparkles } from 'lucide-react';
 
 export function TopDonorsLeaderboard() {
-  const { donations, setSelectedReceiptForShare } = useApp();
+  const { donations, mandal, setSelectedReceiptForShare } = useApp();
   const { isMarathi } = useI18n();
 
   // Sort paid donations by amount descending and pick top 5
@@ -80,7 +80,7 @@ export function TopDonorsLeaderboard() {
                     {item.donorName}
                   </div>
                   <div className="text-[11px] text-gray-500 truncate">
-                    {item.buildingFlat || 'पुणे'}
+                    {item.buildingFlat || mandal?.city || 'केऱ्हाळे बु.'}
                   </div>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useApp } from '@/lib/context/AppContext';
 import { formatCurrencyINR, toDevanagariDigits } from '@/lib/formatters';
+import { safeCopyToClipboard } from '@/lib/clipboard';
 import { 
   Users, 
   UserPlus, 
@@ -109,15 +110,17 @@ export default function MembersPage() {
   const appUrl = typeof window !== 'undefined' ? window.location.origin : 'https://new-yuwa-boys-mandal-book.vercel.app';
   const inviteLink = `${appUrl}/join/${inviteCode}`;
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+  const handleCopyLink = async () => {
+    const success = await safeCopyToClipboard(inviteLink);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
   };
 
   const handleShareWhatsApp = () => {
     const text = `॥ श्री गणेश प्रसन्न ॥\n\n*न्यू युवा गणेश मंडळ, केऱ्हाळे बु.*\nसर्व कार्यकर्त्यांनी डिजिटल जमा-खर्च बहीखाता व पावती तयार करण्यासाठी या अधिकृत लिंकवर क्लिक करून जॉइन व्हा:\n\n👉 ${inviteLink}\n\nमंडळ आमंत्रण कोड: *${inviteCode}*`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleAddMember = async (e: React.FormEvent) => {
