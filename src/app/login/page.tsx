@@ -17,7 +17,6 @@ import {
   Flame
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { auth, getFirebaseAuth, setupRecaptcha, signInWithPhoneNumber, ConfirmationResult } from '@/lib/firebase';
 import { toDevanagariDigits } from '@/lib/formatters';
 
 export const dynamic = 'force-dynamic';
@@ -30,11 +29,10 @@ export default function LoginPage() {
   // Active Tab: PHONE is default per specification
   const [activeTab, setActiveTab] = useState<AuthTab>('PHONE');
 
-  // Phone Auth State
+  // Phone Auth State (Server-Side SMS via OTP.dev)
   const [phone, setPhone] = useState('');
   const [phoneStep, setPhoneStep] = useState<'INPUT' | 'OTP'>('INPUT');
   const [phoneOtp, setPhoneOtp] = useState<string[]>(['', '', '', '', '', '']);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Email Auth State
   const [email, setEmail] = useState('');
@@ -77,7 +75,7 @@ export default function LoginPage() {
   };
 
   // ==========================================
-  // 1. PHONE SMS OTP HANDLERS (Firebase)
+  // 1. PHONE SMS OTP HANDLERS (OTP.dev Gateway)
   // ==========================================
   const handleSendPhoneOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -91,19 +89,17 @@ export default function LoginPage() {
       setLoading(true);
       setMessage(null);
 
-      const activeAuth = getFirebaseAuth();
-      if (!activeAuth) {
-        throw new Error('मोबाईल SMS OTP सेवा सध्या सुरू झालेली नाही. कृपया खाली दिलेल्या "Gmail OTP" किंवा "Google ने लॉगिन करा" पर्याय वापरा.');
+      const res = await fetch('/api/auth/send-sms-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanPhone }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'SMS पाठवण्यात अडचण आली.');
       }
 
-      const verifier = setupRecaptcha('recaptcha-container');
-      if (!verifier) {
-        throw new Error('reCAPTCHA सुरू करताना अडचण आली. कृपया पेज रिफ्रेश करा.');
-      }
-
-      const formattedNumber = `+91${cleanPhone}`;
-      const confirmation = await signInWithPhoneNumber(activeAuth, formattedNumber, verifier);
-      setConfirmationResult(confirmation);
       setPhoneStep('OTP');
       setResendTimer(60);
       setPhoneOtp(['', '', '', '', '', '']);
@@ -117,16 +113,8 @@ export default function LoginPage() {
         phoneInputRefs.current[0]?.focus();
       }, 150);
     } catch (err: any) {
-      console.error('Firebase Phone Auth Error:', err);
-      let errorMsg = 'OTP पाठवताना त्रुटी आली. कृपया नंबर तपासून पुन्हा प्रयत्न करा.';
-      if (err.code === 'auth/invalid-phone-number') {
-        errorMsg = 'अवैध मोबाईल नंबर. कृपया १०-अंकी नंबर तपासा.';
-      } else if (err.code === 'auth/too-many-requests') {
-        errorMsg = 'खूप जास्त प्रयत्न झाले आहेत. कृपया थोड्या वेळाने प्रयत्न करा.';
-      } else if (err.code === 'auth/captcha-check-failed') {
-        errorMsg = 'सुरक्षा पडताळणी अयशस्वी झाली. कृपया पेज रिफ्रेश करा.';
-      }
-      setMessage({ type: 'error', text: errorMsg });
+      console.error('OTP.dev Send Error:', err);
+      setMessage({ type: 'error', text: err.message || 'OTP पाठवताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.' });
     } finally {
       setLoading(false);
     }
@@ -140,24 +128,28 @@ export default function LoginPage() {
       return;
     }
 
-    if (!confirmationResult) {
-      setMessage({ type: 'error', text: 'सत्र कालबाह्य झाले. कृपया पुन्हा OTP पाठवा.' });
-      return;
-    }
+    const cleanPhone = phone.replace(/\D/g, '');
 
     try {
       setLoading(true);
       setMessage(null);
 
-      // 1. Confirm OTP with Firebase
-      const userCredential = await confirmationResult.confirm(otpCode);
-      const idToken = await userCredential.user.getIdToken();
-      const verifiedPhone = userCredential.user.phoneNumber || `+91${phone.replace(/\D/g, '')}`;
+      // 1. Verify SMS OTP via server API
+      const verifyRes = await fetch('/api/auth/verify-sms-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanPhone, otp: otpCode }),
+      });
 
-      // 2. Authorize session via NextAuth phone-otp provider
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) {
+        throw new Error(verifyData.error || 'अवैध किंवा कालबाह्य झालेला OTP.');
+      }
+
+      // 2. Authorize NextAuth session via phone-otp provider
       const result = await signIn('phone-otp', {
-        phone: verifiedPhone,
-        idToken,
+        phone: cleanPhone,
+        otp: otpCode,
         redirect: false,
       });
 
@@ -173,22 +165,20 @@ export default function LoginPage() {
       });
 
       // Save client info for instant offline access
-      const userObj = { phone: verifiedPhone, name: 'मंडळ कार्यकर्ता', role: 'VOLUNTEER' };
+      const userObj = {
+        phone: verifyData.user?.phone || `+91${cleanPhone}`,
+        name: verifyData.user?.name || 'मंडळ कार्यकर्ता',
+        role: verifyData.user?.role || 'VOLUNTEER',
+      };
       localStorage.setItem('mandalbook_user', JSON.stringify(userObj));
-      localStorage.setItem('mandalbook_role', 'VOLUNTEER');
+      localStorage.setItem('mandalbook_role', userObj.role);
 
       const target = getCallbackUrl();
       router.push(target);
       router.refresh();
     } catch (err: any) {
       console.error('Verify Phone OTP error:', err);
-      let errorMsg = 'अवैध OTP कोड. कृपया एसएमएस तपासून योग्य कोड टाका.';
-      if (err.code === 'auth/invalid-verification-code') {
-        errorMsg = 'चुकीचा OTP कोड टाकला आहे. कृपया पुन्हा तपासा.';
-      } else if (err.code === 'auth/code-expired') {
-        errorMsg = 'OTP कालबाह्य झाला आहे. कृपया नवीन OTP मागवा.';
-      }
-      setMessage({ type: 'error', text: errorMsg });
+      setMessage({ type: 'error', text: err.message || 'चुकीचा OTP कोड टाकला आहे. कृपया पुन्हा तपासा.' });
     } finally {
       setLoading(false);
     }

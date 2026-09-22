@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { User } from '@/models/User';
 import { Mandal } from '@/models/Mandal';
 import { MandalMember } from '@/models/MandalMember';
+import { OtpToken } from '@/models/OtpToken';
 
 function normalizePhoneNumber(input: string): string {
   const digits = input.replace(/\D/g, '');
@@ -21,12 +22,13 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
 
-    // 2. Mobile Phone SMS OTP Provider (Firebase Phone Auth)
+    // 2. Mobile Phone SMS OTP Provider (OTP.dev Server-Side SMS)
     CredentialsProvider({
       id: 'phone-otp',
       name: 'Phone SMS OTP',
       credentials: {
         phone: { label: 'Phone', type: 'text' },
+        otp: { label: 'SMS OTP Code', type: 'text' },
         idToken: { label: 'Firebase ID Token', type: 'text' },
       },
       async authorize(credentials) {
@@ -34,9 +36,19 @@ const handler = NextAuth({
 
         await connectToDatabase();
         let verifiedPhone = normalizePhoneNumber(credentials.phone);
+        const rawTenDigits = verifiedPhone.replace(/\D/g, '').slice(-10);
 
-        // Optionally verify Firebase idToken via Google Identity Toolkit
-        if (credentials.idToken && process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+        // Verify OTP.dev 6-digit OTP from MongoDB if provided
+        if (credentials.otp) {
+          const otpRecord = await OtpToken.findOne({
+            phone: rawTenDigits,
+            otp: String(credentials.otp).trim(),
+          });
+          if (!otpRecord || new Date() > otpRecord.expiresAt) {
+            return null; // Invalid or expired OTP
+          }
+          await OtpToken.deleteOne({ _id: otpRecord._id });
+        } else if (credentials.idToken && process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
           try {
             const verifyRes = await fetch(
               `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`,
@@ -55,7 +67,6 @@ const handler = NextAuth({
           }
         }
 
-        const rawTenDigits = verifiedPhone.replace(/\D/g, '').slice(-10);
         const isAdhyaksh = rawTenDigits === '7499085045' || rawTenDigits === '9923092340';
 
         let user = await User.findOne({
