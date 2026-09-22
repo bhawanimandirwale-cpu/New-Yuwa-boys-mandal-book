@@ -45,6 +45,7 @@ export function CollectDrawer() {
   } = useApp();
 
   const [donorName, setDonorName] = useState('');
+  const [nameError, setNameError] = useState<string | null>(null);
   const [donorPhone, setDonorPhone] = useState('');
   const [buildingFlat, setBuildingFlat] = useState('');
   const [amount, setAmount] = useState<string>('501');
@@ -148,6 +149,7 @@ export function CollectDrawer() {
   // Reset for next donation (1-tap)
   const handleResetForNext = () => {
     setDonorName('');
+    setNameError(null);
     setDonorPhone('');
     setBuildingFlat('');
     setAmount('501');
@@ -164,7 +166,16 @@ export function CollectDrawer() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!donorName.trim() || numericAmount <= 0) return;
+    if (!donorName.trim()) {
+      setNameError('कृपया देणगीदार किंवा भाविकाचे नाव प्रविष्ट करा.');
+      const el = document.getElementById('donor-name-input');
+      el?.focus();
+      return;
+    }
+    if (numericAmount <= 0) {
+      alert('कृपया योग्य वर्गणी रक्कम प्रविष्ट करा.');
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -243,14 +254,14 @@ ${receiptUrl}
         onClick={handleClose}
       />
 
-      {/* 2. Slide-up Bottom Sheet (Thumb Zone Friendly) */}
+      {/* 2. Slide-up Bottom Sheet (Mobile) / Centered Card (Desktop) */}
       <div 
-        className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto bg-white rounded-t-[2rem] shadow-2xl border-t-2 border-saffron-500 max-h-[92vh] flex flex-col notranslate animate-in slide-in-from-bottom-8 duration-200"
+        className="fixed bottom-0 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 left-0 right-0 z-50 max-w-lg mx-auto bg-white rounded-t-[2rem] sm:rounded-3xl shadow-2xl border-t-2 sm:border-2 border-saffron-500 max-h-[92vh] flex flex-col notranslate animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Swipe Handle Indicator */}
-        <div className="pt-2.5 pb-1 flex justify-center cursor-pointer" onClick={handleClose}>
+        {/* Swipe Handle Indicator (Mobile only) */}
+        <div className="pt-2.5 pb-1 flex justify-center cursor-pointer sm:hidden" onClick={handleClose}>
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
@@ -345,21 +356,46 @@ ${receiptUrl}
             <form onSubmit={handleSubmit} className="space-y-3.5">
               {/* 1. Donor Name Input */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  देणगीदार / भाविकाचे नाव *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label htmlFor="donor-name-input" className="text-xs font-bold text-gray-700">
+                    देणगीदार / भाविकाचे नाव *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDonorName('अनामिक भाविक (गुप्तदान)');
+                      if (nameError) setNameError(null);
+                    }}
+                    className="text-[10px] font-bold text-saffron-700 hover:text-saffron-800 bg-orange-50 hover:bg-orange-100 px-2 py-0.5 rounded-md border border-saffron-200 active:scale-95 transition-all"
+                  >
+                    + अनामिक / गुप्तदान
+                  </button>
+                </div>
                 <div className="relative">
                   <User className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
                   <input
+                    id="donor-name-input"
                     type="text"
                     required
                     autoCapitalize="words"
-                    placeholder="उदा. ज्ञानेश्वर विठ्ठल पाटील"
+                    placeholder="येथे भाविकाचे नाव लिहा..."
                     value={donorName}
-                    onChange={(e) => setDonorName(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-gray-200 focus:border-saffron-500 focus:outline-none text-sm font-bold text-gray-900 placeholder:text-gray-400 font-heading"
+                    onChange={(e) => {
+                      setDonorName(e.target.value);
+                      if (nameError) setNameError(null);
+                    }}
+                    className={`w-full pl-9 pr-3 py-2.5 rounded-xl border-2 text-sm font-bold text-gray-900 placeholder:text-gray-400 font-heading focus:outline-none transition-all ${
+                      nameError 
+                        ? 'border-red-500 bg-red-50/20 ring-2 ring-red-200' 
+                        : 'border-gray-200 focus:border-saffron-500'
+                    }`}
                   />
                 </div>
+                {nameError && (
+                  <p className="text-[11px] text-red-600 font-bold mt-1 flex items-center gap-1 animate-in fade-in">
+                    ⚠️ {nameError}
+                  </p>
+                )}
               </div>
 
               {/* 2. 10-Digit Mobile Number Input (Phonebook Paste Support) */}

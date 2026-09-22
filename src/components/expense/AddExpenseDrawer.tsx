@@ -181,14 +181,14 @@ export function AddExpenseDrawer() {
         onClick={() => setIsAddExpenseOpen(false)}
       />
 
-      {/* Slide-Up Bottom Sheet */}
+      {/* Slide-Up Bottom Sheet (Mobile) / Centered Modal (Desktop) */}
       <div 
-        className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto bg-white rounded-t-[2rem] shadow-2xl border-t-2 border-red-500 max-h-[92vh] flex flex-col notranslate animate-in slide-in-from-bottom-8 duration-200"
+        className="fixed bottom-0 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 left-0 right-0 z-50 max-w-lg mx-auto bg-white rounded-t-[2rem] sm:rounded-3xl shadow-2xl border-t-2 sm:border-2 border-red-500 max-h-[92vh] flex flex-col notranslate animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Swipe Handle */}
-        <div className="pt-2.5 pb-1 flex justify-center cursor-pointer" onClick={() => setIsAddExpenseOpen(false)}>
+        {/* Swipe Handle (Mobile only) */}
+        <div className="pt-2.5 pb-1 flex justify-center cursor-pointer sm:hidden" onClick={() => setIsAddExpenseOpen(false)}>
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 

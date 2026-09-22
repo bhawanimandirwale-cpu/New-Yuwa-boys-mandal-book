@@ -59,9 +59,9 @@ export function AppHeader() {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm notranslate">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2">
         {/* Left: Mandal Identity */}
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-2.5 shrink-0">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-saffron-600 to-amber-400 p-0.5 flex items-center justify-center text-white shadow-md shadow-saffron-500/20 shrink-0 overflow-hidden">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-saffron-600 to-amber-400 p-0.5 flex items-center justify-center text-white shadow-md shadow-saffron-500/20 shrink-0 overflow-hidden">
               <img
                 src="/mandal-logo.png"
                 alt="न्यू युवा गणेश मंडळ, केऱ्हाळे बु."
@@ -70,14 +70,14 @@ export function AppHeader() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-saffron-100 text-saffron-800 shrink-0">
+                <span className="text-[11px] font-bold px-1.5 py-0.2 rounded bg-saffron-100 text-saffron-800 shrink-0">
                   {mandal?.city || 'केऱ्हाळे बु.'}
                 </span>
-                <span className="text-[11px] text-gray-500 truncate hidden sm:inline">
+                <span className="text-[10px] text-gray-400 truncate hidden xl:inline">
                   {mandal?.registrationNumber || 'नोंदणी क्र. महा/केऱ्हाळे/२०२६'}
                 </span>
               </div>
-              <h1 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 truncate leading-tight font-heading">
+              <h1 className="text-xs sm:text-sm xl:text-base font-bold text-gray-900 truncate leading-tight font-heading max-w-[160px] sm:max-w-[220px] xl:max-w-none">
                 {mandal?.name || 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.'}
               </h1>
             </div>
@@ -85,7 +85,7 @@ export function AppHeader() {
         </div>
 
         {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5">
           {navLinks.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -93,28 +93,28 @@ export function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-2 xl:px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all whitespace-nowrap ${
                   isActive
-                    ? 'bg-orange-50 text-saffron-600 font-bold'
+                    ? 'bg-orange-50 text-saffron-600 font-bold shadow-xs'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{item.label}</span>
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
         {/* Right: Controls (Quick Action, Role Switcher, Year, Language) */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {currentRole !== 'MEMBER' && (
             <button
               onClick={() => setIsAddDonationOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white text-xs font-bold shadow-sm active:scale-95 transition-all"
+              className="hidden md:flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white text-xs font-bold shadow-sm active:scale-95 transition-all whitespace-nowrap"
             >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>{t('add_donation')}</span>
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span className="whitespace-nowrap">{t('add_donation')}</span>
             </button>
           )}
           {/* Year Switcher */}
@@ -264,7 +264,7 @@ export function AppHeader() {
             onClick={() => {
               window.dispatchEvent(new CustomEvent('open-pwa-install'));
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-extrabold rounded-lg bg-gradient-to-r from-saffron-500 to-amber-500 text-white hover:from-saffron-600 hover:to-amber-600 shadow-sm transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-extrabold rounded-lg bg-gradient-to-r from-saffron-500 to-amber-500 text-white hover:from-saffron-600 hover:to-amber-600 shadow-sm transition-all active:scale-95 cursor-pointer whitespace-nowrap"
             title="मोबाईलच्या होम स्क्रीनवर ॲप इन्स्टॉल करा"
           >
             <Download className="w-3.5 h-3.5 animate-bounce" />
