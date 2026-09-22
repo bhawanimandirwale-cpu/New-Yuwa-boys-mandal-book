@@ -65,6 +65,34 @@ export default function LoginPage() {
     setMessage(null);
   };
 
+  // Check for NextAuth error query parameter on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get('error');
+      if (err) {
+        if (err === 'Callback' || err === 'OAuthCallback') {
+          setMessage({
+            type: 'error',
+            text: 'Google प्रमाणीकरणामध्ये तात्पुरती त्रुटी आली. कृपया पुन्हा प्रयत्न करा किंवा मोबाईल SMS OTP द्वारे लॉगिन करा.',
+          });
+          setActiveTab('GOOGLE');
+        } else if (err === 'OAuthSignin' || err === 'OAuthCreateAccount') {
+          setMessage({
+            type: 'error',
+            text: 'Google खात्याशी संपर्क साधताना अडचण आली. कृपया पुन्हा प्रयत्न करा.',
+          });
+          setActiveTab('GOOGLE');
+        } else if (err === 'AccessDenied') {
+          setMessage({
+            type: 'error',
+            text: 'प्रवेश नाकारण्यात आला आहे. कृपया अधिकृत खात्याद्वारे लॉगिन करा.',
+          });
+        }
+      }
+    }
+  }, []);
+
   // Helper to get redirect URL
   const getCallbackUrl = () => {
     if (typeof window !== 'undefined') {

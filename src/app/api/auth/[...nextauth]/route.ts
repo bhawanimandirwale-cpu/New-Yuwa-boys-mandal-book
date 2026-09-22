@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import mongoose from 'mongoose';
 import { connectToDatabase } from '@/lib/mongodb';
 import { User } from '@/models/User';
 import { Mandal } from '@/models/Mandal';
@@ -231,121 +232,158 @@ const handler = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === 'google' && user.email) {
-        await connectToDatabase();
-        const normalizedEmail = user.email.toLowerCase().trim();
-        const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
+      try {
+        if (account?.provider === 'google' && user.email) {
+          await connectToDatabase();
+          const normalizedEmail = user.email.toLowerCase().trim();
+          const isAdmin = normalizedEmail === 'bhawanimandirwale@gmail.com';
 
-        let dbUser = await User.findOne({ email: normalizedEmail });
-        if (!dbUser) {
-          dbUser = await User.create({
-            email: normalizedEmail,
-            name: isAdmin ? 'पार्थ पाटील (अध्यक्ष)' : (user.name || normalizedEmail.split('@')[0]),
-            avatarUrl: user.image || '',
-            role: isAdmin ? 'SUPER_ADMIN' : 'USER',
-          });
-        } else if (isAdmin) {
-          let updated = false;
-          if (dbUser.role !== 'SUPER_ADMIN') {
-            dbUser.role = 'SUPER_ADMIN';
-            updated = true;
-          }
-          if (dbUser.name !== 'पार्थ पाटील (अध्यक्ष)') {
-            dbUser.name = 'पार्थ पाटील (अध्यक्ष)';
-            updated = true;
-          }
-          if (updated) {
-            await dbUser.save();
-          }
-        }
-
-        const mandal = await Mandal.findOne();
-        if (mandal) {
-          const member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
-          if (!member) {
-            await MandalMember.create({
-              mandalId: mandal._id,
-              userId: dbUser._id,
-              role: isAdmin ? 'ADMIN' : 'MEMBER',
-              status: isAdmin ? 'ACTIVE' : 'PENDING',
+          let dbUser = await User.findOne({ email: normalizedEmail });
+          if (!dbUser) {
+            dbUser = await User.create({
+              email: normalizedEmail,
+              name: isAdmin ? 'पार्थ पाटील (अध्यक्ष)' : (user.name || normalizedEmail.split('@')[0]),
+              avatarUrl: user.image || '',
+              role: isAdmin ? 'SUPER_ADMIN' : 'USER',
             });
-          } else if (isAdmin && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
-            member.role = 'ADMIN';
-            member.status = 'ACTIVE';
-            await member.save();
+          } else if (isAdmin) {
+            let updated = false;
+            if (dbUser.role !== 'SUPER_ADMIN') {
+              dbUser.role = 'SUPER_ADMIN';
+              updated = true;
+            }
+            if (dbUser.name !== 'पार्थ पाटील (अध्यक्ष)') {
+              dbUser.name = 'पार्थ पाटील (अध्यक्ष)';
+              updated = true;
+            }
+            if (updated) {
+              await dbUser.save();
+            }
+          }
+
+          // Crucial: assign the actual MongoDB _id to user.id so downstream callbacks get valid ObjectId
+          user.id = dbUser._id.toString();
+
+          const mandal = await Mandal.findOne();
+          if (mandal) {
+            let member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
+            if (!member) {
+              await MandalMember.create({
+                mandalId: mandal._id,
+                userId: dbUser._id,
+                role: isAdmin ? 'ADMIN' : 'MEMBER',
+                status: isAdmin ? 'ACTIVE' : 'PENDING',
+              });
+            } else if (isAdmin && (member.role !== 'ADMIN' || member.status !== 'ACTIVE')) {
+              member.role = 'ADMIN';
+              member.status = 'ACTIVE';
+              await member.save();
+            }
           }
         }
+        return true;
+      } catch (error) {
+        console.error('Error in NextAuth signIn callback:', error);
+        return true; // Still allow signIn so user is not blocked with Callback error
       }
-      return true;
     },
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role || 'PENDING';
-        token.status = (user as any).status || 'PENDING';
-        token.phone = (user as any).phone || '';
-        token.mandalId = (user as any).mandalId;
-      }
-
-      await connectToDatabase();
-      const normalizedEmail = token.email ? token.email.toLowerCase().trim() : '';
-      const rawPhone = token.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
-
-      const isAdmin =
-        normalizedEmail === 'bhawanimandirwale@gmail.com' ||
-        rawPhone === '7499085045' ||
-        rawPhone === '9923092340';
-
-      let dbUser = null;
-      if (token.id) {
-        dbUser = await User.findById(token.id);
-      }
-      if (!dbUser && normalizedEmail) {
-        dbUser = await User.findOne({ email: normalizedEmail });
-      }
-      if (!dbUser && rawPhone) {
-        dbUser = await User.findOne({
-          $or: [{ phone: rawPhone }, { phone: `+91${rawPhone}` }],
-        });
-      }
-
-      if (dbUser) {
-        token.id = dbUser._id.toString();
-        if (dbUser.phone) token.phone = dbUser.phone;
-        if (dbUser.email) token.email = dbUser.email;
-
-        const mandal = await Mandal.findOne();
-        if (mandal) {
-          token.mandalId = mandal._id.toString();
-          const member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
-
-          if (isAdmin) {
-            token.role = 'ADMIN';
-            token.status = 'ACTIVE';
-          } else if (member && member.status === 'ACTIVE') {
-            token.role = member.role;
-            token.status = 'ACTIVE';
-          } else {
-            token.role = 'PENDING';
-            token.status = member?.status || 'PENDING';
-          }
-        } else {
-          token.role = isAdmin ? 'ADMIN' : 'PENDING';
-          token.status = isAdmin ? 'ACTIVE' : 'PENDING';
+      try {
+        if (user) {
+          token.id = user.id;
+          token.role = (user as any).role || 'PENDING';
+          token.status = (user as any).status || 'PENDING';
+          token.phone = (user as any).phone || '';
+          token.mandalId = (user as any).mandalId;
         }
-      }
 
-      return token;
+        await connectToDatabase();
+        const normalizedEmail = (token.email || user?.email || '').toLowerCase().trim();
+        const rawPhone = token.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
+
+        const isAdmin =
+          normalizedEmail === 'bhawanimandirwale@gmail.com' ||
+          rawPhone === '7499085045' ||
+          rawPhone === '9923092340';
+
+        let dbUser = null;
+
+        // 1. Search by email first (reliable for Google OAuth & Gmail OTP)
+        if (normalizedEmail) {
+          dbUser = await User.findOne({ email: normalizedEmail });
+        }
+
+        // 2. Search by valid Mongo ObjectId (guarded to prevent CastError from Google sub IDs)
+        if (!dbUser && token.id && typeof token.id === 'string' && mongoose.Types.ObjectId.isValid(token.id)) {
+          dbUser = await User.findById(token.id);
+        }
+
+        // 3. Search by Phone number
+        if (!dbUser && rawPhone) {
+          dbUser = await User.findOne({
+            $or: [{ phone: rawPhone }, { phone: `+91${rawPhone}` }],
+          });
+        }
+
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          if (dbUser.phone) token.phone = dbUser.phone;
+          if (dbUser.email) token.email = dbUser.email;
+          if (dbUser.name) token.name = dbUser.name;
+
+          const mandal = await Mandal.findOne();
+          if (mandal) {
+            token.mandalId = mandal._id.toString();
+            let member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
+
+            if (!member && !isAdmin) {
+              member = await MandalMember.create({
+                mandalId: mandal._id,
+                userId: dbUser._id,
+                role: 'MEMBER',
+                status: 'PENDING',
+              });
+            }
+
+            if (isAdmin) {
+              token.role = 'ADMIN';
+              token.status = 'ACTIVE';
+            } else if (member && member.status === 'ACTIVE') {
+              token.role = member.role;
+              token.status = 'ACTIVE';
+            } else {
+              token.role = 'PENDING';
+              token.status = member?.status || 'PENDING';
+            }
+          } else {
+            token.role = isAdmin ? 'ADMIN' : 'PENDING';
+            token.status = isAdmin ? 'ACTIVE' : 'PENDING';
+          }
+        } else if (isAdmin) {
+          token.role = 'ADMIN';
+          token.status = 'ACTIVE';
+        }
+
+        return token;
+      } catch (err) {
+        console.error('Error in NextAuth jwt callback:', err);
+        return token;
+      }
     },
     async session({ session, token }) {
-      if (session?.user) {
-        (session.user as any).id = token.id || token.sub;
-        (session.user as any).phone = token.phone || '';
-        (session.user as any).role = token.role || 'PENDING';
-        (session.user as any).status = token.status || 'PENDING';
-        (session.user as any).mandalId = token.mandalId;
+      try {
+        if (session?.user) {
+          (session.user as any).id = token.id || token.sub;
+          (session.user as any).phone = token.phone || '';
+          (session.user as any).role = token.role || 'PENDING';
+          (session.user as any).status = token.status || 'PENDING';
+          (session.user as any).mandalId = token.mandalId;
+        }
+        return session;
+      } catch (err) {
+        console.error('Error in NextAuth session callback:', err);
+        return session;
       }
-      return session;
     },
   },
   session: {
@@ -354,7 +392,9 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token',
   pages: {
     signIn: '/login',
+    error: '/login',
   },
+  debug: process.env.NODE_ENV === 'development',
 });
 
 export { handler as GET, handler as POST };
