@@ -119,11 +119,11 @@ export function InstallPromptModal() {
             <>
               {/* Icon & Heading */}
               <div className="flex items-center gap-3.5 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-saffron-500 to-amber-400 p-2 text-white shadow-lg shadow-saffron-500/30 flex items-center justify-center shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-saffron-500 to-amber-400 p-0.5 text-white shadow-lg shadow-saffron-500/30 flex items-center justify-center shrink-0 overflow-hidden">
                   <img
-                    src="/icon.svg"
+                    src="/mandal-logo.png"
                     alt="New Yuwa Boys Mandal Book"
-                    className="w-10 h-10 object-contain drop-shadow"
+                    className="w-full h-full object-cover rounded-xl"
                   />
                 </div>
                 <div className="min-w-0">

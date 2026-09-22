@@ -61,8 +61,12 @@ export function AppHeader() {
         {/* Left: Mandal Identity */}
         <div className="flex items-center gap-2.5 min-w-0">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-saffron-600 to-amber-400 flex items-center justify-center text-white shadow-md shadow-saffron-500/20 shrink-0">
-              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-saffron-600 to-amber-400 p-0.5 flex items-center justify-center text-white shadow-md shadow-saffron-500/20 shrink-0 overflow-hidden">
+              <img
+                src="/mandal-logo.png"
+                alt="न्यू युवा गणेश मंडळ, केऱ्हाळे बु."
+                className="w-full h-full object-cover rounded-lg"
+              />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
