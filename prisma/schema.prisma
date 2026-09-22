@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Mandal {
+  id                  String            @id @default(cuid())
+  name                String
+  tagline             String?
+  registrationNumber  String?
+  establishedYear     Int?
+  address             String?
+  city                String            @default("पुणे")
+  logoUrl             String?
+  upiId               String?
+  activeYear          Int               @default(2026)
+  cashInHand          Float             @default(0)
+  bankBalance         Float             @default(0)
+  bankName            String?
+  accountNumber       String?
+  ifscCode            String?
+  presidentName       String?           @default("श्री. समाधान पाटील")
+  secretaryName       String?           @default("श्री. राहुल शिंदे")
+  treasurerName       String?           @default("श्री. महेश जोशी")
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  users               User[]
+  donations           VarganiDonation[]
+  expenses            Expense[]
+  documents           PermitDocument[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  mandalId  String
+  name      String
+  phone     String?
+  email     String?  @unique
+  role      String   @default("VOLUNTEER") // ADMIN, TREASURER, VOLUNTEER, MEMBER
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  mandal    Mandal   @relation(fields: [mandalId], references: [id], onDelete: Cascade)
+}
+
+model VarganiDonation {
+  id            String    @id @default(cuid())
+  mandalId      String
+  donorName     String
+  donorPhone    String?
+  buildingFlat  String?
+  amount        Float
+  paymentMode   String    @default("CASH") // CASH, UPI, CHEQUE, ONLINE
+  isInKind      Boolean   @default(false)
+  inKindDetails String?
+  receiptNo     String    @unique
+  collectorName String?   @default("स्वयंसेवक")
+  collectorId   String?
+  year          Int       @default(2026)
+  status        String    @default("PAID") // PAID, PLEDGED
+  pledgeDate    DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  mandal        Mandal    @relation(fields: [mandalId], references: [id], onDelete: Cascade)
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  mandalId    String
+  title       String
+  category    String   @default("MISC") // MANDAP, IDOL, LIGHTING, SOUND_DJ, PRASAD, LEGAL_PERMIT, IMMERSION, MISC
+  amount      Float
+  paidTo      String
+  paidBy      String
+  billUrl     String?
+  voucherNo   String   @unique
+  year        Int      @default(2026)
+  date        DateTime @default(now())
+  approvedBy  String?
+  status      String   @default("APPROVED") // APPROVED, PENDING, REJECTED
+  createdAt   DateTime @default(now())
+
+  mandal      Mandal   @relation(fields: [mandalId], references: [id], onDelete: Cascade)
+}
+
+model PermitDocument {
+  id           String   @id @default(cuid())
+  mandalId     String
+  title        String
+  category     String   @default("OTHER") // POLICE, MUNICIPAL, FIRE_NOC, ELECTRICITY, INSURANCE, OTHER
+  fileUrl      String
+  year         Int      @default(2026)
+  status       String   @default("APPROVED") // APPROVED, IN_PROCESS, EXPIRED
+  officerNotes String?
+  uploadedAt   DateTime @default(now())
+
+  mandal       Mandal   @relation(fields: [mandalId], references: [id], onDelete: Cascade)
+}

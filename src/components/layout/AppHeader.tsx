@@ -1,0 +1,245 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useApp } from '@/lib/context/AppContext';
+import { useI18n, Language } from '@/lib/i18n/context';
+import { toDevanagariDigits } from '@/lib/formatters';
+import { UserRole } from '@/lib/types';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { 
+  ShieldAlert, 
+  Wallet, 
+  Users, 
+  UserCheck, 
+  Globe, 
+  Calendar, 
+  ChevronDown, 
+  Sparkles,
+  Flame,
+  LayoutDashboard,
+  HandCoins,
+  Receipt,
+  FileSpreadsheet,
+  FileCheck,
+  Plus
+} from 'lucide-react';
+
+const roleLabels: Record<UserRole, { title: string; icon: any; color: string }> = {
+  ADMIN: { title: 'अध्यक्ष', icon: ShieldAlert, color: 'bg-red-50 text-red-700 border-red-200' },
+  TREASURER: { title: 'खजिनदार', icon: Wallet, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  VOLUNTEER: { title: 'कार्यकर्ता', icon: Flame, color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  MEMBER: { title: 'सदस्य / भाविक', icon: Users, color: 'bg-blue-50 text-blue-700 border-blue-200' },
+};
+
+export function AppHeader() {
+  const pathname = usePathname();
+  const { mandal, currentRole, setRole, activeYear, setYear, setIsAddDonationOpen } = useApp();
+  const { language, setLanguage, isMarathi, t } = useI18n();
+
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [yearMenuOpen, setYearMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  const CurrentRoleIcon = roleLabels[currentRole].icon;
+
+  const navLinks = [
+    { label: t('dashboard'), href: '/', icon: LayoutDashboard },
+    { label: t('donations'), href: '/donations', icon: HandCoins },
+    { label: t('expenses'), href: '/expenses', icon: Receipt },
+    { label: t('reports'), href: '/reports', icon: FileSpreadsheet },
+    { label: t('documents'), href: '/documents', icon: FileCheck },
+  ];
+
+  return (
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm notranslate">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2">
+        {/* Left: Mandal Identity */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-saffron-600 to-amber-400 flex items-center justify-center text-white shadow-md shadow-saffron-500/20 shrink-0">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-saffron-100 text-saffron-800 shrink-0">
+                  {mandal?.city || 'केऱ्हाळे बु.'}
+                </span>
+                <span className="text-[11px] text-gray-500 truncate hidden sm:inline">
+                  {mandal?.registrationNumber || 'नोंदणी क्र. महा/केऱ्हाळे/२०२६'}
+                </span>
+              </div>
+              <h1 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 truncate leading-tight font-heading">
+                {mandal?.name || 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.'}
+              </h1>
+            </div>
+          </Link>
+        </div>
+
+        {/* Center: Desktop Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1">
+          {navLinks.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive
+                    ? 'bg-orange-50 text-saffron-600 font-bold'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Right: Controls (Quick Action, Role Switcher, Year, Language) */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          {currentRole !== 'MEMBER' && (
+            <button
+              onClick={() => setIsAddDonationOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white text-xs font-bold shadow-sm active:scale-95 transition-all"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>{t('add_donation')}</span>
+            </button>
+          )}
+          {/* Year Switcher */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setYearMenuOpen(!yearMenuOpen);
+                setRoleMenuOpen(false);
+                setLangMenuOpen(false);
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-orange-50 text-saffron-700 border border-saffron-200 hover:bg-saffron-100 transition-colors"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{isMarathi ? toDevanagariDigits(activeYear) : activeYear}</span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+
+            {yearMenuOpen && (
+              <div className="absolute right-0 mt-1 w-28 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 text-xs">
+                {[2026, 2025, 2024].map((yr) => (
+                  <button
+                    key={yr}
+                    onClick={() => {
+                      setYear(yr);
+                      setYearMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 hover:bg-orange-50 font-medium ${
+                      activeYear === yr ? 'text-saffron-600 bg-orange-50/50 font-bold' : 'text-gray-700'
+                    }`}
+                  >
+                    {isMarathi ? `वर्ष ${toDevanagariDigits(yr)}` : `Year ${yr}`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Role Simulation Switcher (Mandatory for testing multi-tier hierarchy) */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setRoleMenuOpen(!roleMenuOpen);
+                setYearMenuOpen(false);
+                setLangMenuOpen(false);
+              }}
+              className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all ${roleLabels[currentRole].color}`}
+            >
+              <CurrentRoleIcon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{roleLabels[currentRole].title}</span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+
+            {roleMenuOpen && (
+              <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 text-xs">
+                <div className="px-3 py-1 text-[10px] uppercase font-bold text-gray-400">
+                  भूमिका निवडा (Role Switch)
+                </div>
+                {(['ADMIN', 'TREASURER', 'VOLUNTEER', 'MEMBER'] as UserRole[]).map((role) => {
+                  const ItemIcon = roleLabels[role].icon;
+                  return (
+                    <button
+                      key={role}
+                      onClick={() => {
+                        setRole(role);
+                        setRoleMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 transition-colors ${
+                        currentRole === role ? 'bg-orange-50/70 text-saffron-700 font-bold' : 'text-gray-700'
+                      }`}
+                    >
+                      <ItemIcon className="w-3.5 h-3.5 shrink-0" />
+                      <span>{roleLabels[role].title}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Language Switcher */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setLangMenuOpen(!langMenuOpen);
+                setRoleMenuOpen(false);
+                setYearMenuOpen(false);
+              }}
+              className="p-1.5 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors"
+              title="Change Language"
+            >
+              <Globe className="w-4 h-4 text-gray-700" />
+            </button>
+
+            {langMenuOpen && (
+              <div className="absolute right-0 mt-1 w-28 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 text-xs">
+                <button
+                  onClick={() => {
+                    setLanguage('mr');
+                    setLangMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-orange-50 ${
+                    language === 'mr' ? 'text-saffron-600 font-bold bg-orange-50/50' : 'text-gray-700'
+                  }`}
+                >
+                  मराठी (MR)
+                </button>
+                <button
+                  onClick={() => {
+                    setLanguage('hi');
+                    setLangMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-orange-50 ${
+                    language === 'hi' ? 'text-saffron-600 font-bold bg-orange-50/50' : 'text-gray-700'
+                  }`}
+                >
+                  हिंदी (HI)
+                </button>
+                <button
+                  onClick={() => {
+                    setLanguage('en');
+                    setLangMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-orange-50 ${
+                    language === 'en' ? 'text-saffron-600 font-bold bg-orange-50/50' : 'text-gray-700'
+                  }`}
+                >
+                  English (EN)
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
