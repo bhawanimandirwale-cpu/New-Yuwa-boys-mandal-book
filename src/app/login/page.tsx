@@ -17,8 +17,10 @@ import {
   Flame
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { auth, setupRecaptcha, signInWithPhoneNumber, ConfirmationResult } from '@/lib/firebase';
+import { auth, getFirebaseAuth, setupRecaptcha, signInWithPhoneNumber, ConfirmationResult } from '@/lib/firebase';
 import { toDevanagariDigits } from '@/lib/formatters';
+
+export const dynamic = 'force-dynamic';
 
 type AuthTab = 'PHONE' | 'GOOGLE' | 'EMAIL';
 
@@ -89,13 +91,18 @@ export default function LoginPage() {
       setLoading(true);
       setMessage(null);
 
+      const activeAuth = getFirebaseAuth();
+      if (!activeAuth) {
+        throw new Error('मोबाईल SMS OTP सेवा सध्या सुरू झालेली नाही. कृपया खाली दिलेल्या "Gmail OTP" किंवा "Google ने लॉगिन करा" पर्याय वापरा.');
+      }
+
       const verifier = setupRecaptcha('recaptcha-container');
       if (!verifier) {
         throw new Error('reCAPTCHA सुरू करताना अडचण आली. कृपया पेज रिफ्रेश करा.');
       }
 
       const formattedNumber = `+91${cleanPhone}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedNumber, verifier);
+      const confirmation = await signInWithPhoneNumber(activeAuth, formattedNumber, verifier);
       setConfirmationResult(confirmation);
       setPhoneStep('OTP');
       setResendTimer(60);
