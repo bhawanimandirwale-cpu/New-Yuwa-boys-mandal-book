@@ -1,8 +1,11 @@
-import { db } from '@/lib/db';
+import { connectToDatabase } from '@/lib/mongodb';
+import { Donation } from '@/models/Donation';
+import { Mandal } from '@/models/Mandal';
+import mongoose from 'mongoose';
 import { notFound } from 'next/navigation';
 import { ReceiptCard } from '@/components/receipts/ReceiptCard';
 import Link from 'next/link';
-import { ShieldCheck, ArrowLeft, Download, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface ReceiptPageProps {
   params: Promise<{ id: string }>;
@@ -11,41 +14,61 @@ interface ReceiptPageProps {
 export default async function PublicReceiptPage({ params }: ReceiptPageProps) {
   const { id } = await params;
 
-  const donation = await db.varganiDonation.findFirst({
-    where: {
-      OR: [{ id }, { receiptNo: id }],
-    },
-    include: {
-      mandal: true,
-    },
-  });
+  await connectToDatabase();
+
+  const query: any = {};
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    query.$or = [{ _id: id }, { receiptNo: id }];
+  } else {
+    query.receiptNo = id;
+  }
+
+  const donation = await Donation.findOne(query).populate('mandalId');
 
   if (!donation) {
     notFound();
   }
 
-  // Convert dates and relations to plain JSON for client component
+  const mandal = (donation.mandalId as any) || (await Mandal.findOne());
+
   const donationItem = {
-    ...donation,
+    id: donation._id.toString(),
+    donorName: donation.donorName,
+    donorPhone: donation.donorPhone,
+    buildingFlat: donation.buildingFlat,
+    amount: donation.amount,
+    amountInWords: donation.amountInWords,
+    paymentMode: donation.paymentMode,
+    isInKind: donation.isInKind,
+    inKindDetails: donation.inKindDetails,
+    receiptNo: donation.receiptNo,
+    collectorName: donation.collectorName,
+    year: donation.year,
+    status: donation.status,
+    notes: donation.notes,
     createdAt: donation.createdAt.toISOString(),
-    pledgeDate: donation.pledgeDate ? donation.pledgeDate.toISOString() : undefined,
   };
 
-  const mandalItem = donation.mandal
+  const mandalItem = mandal
     ? {
-        ...donation.mandal,
-        tagline: donation.mandal.tagline || '',
-        registrationNumber: donation.mandal.registrationNumber || '',
-        establishedYear: donation.mandal.establishedYear || 1984,
-        address: donation.mandal.address || '',
-        logoUrl: donation.mandal.logoUrl || undefined,
-        upiId: donation.mandal.upiId || 'mandal@upi',
-        bankName: donation.mandal.bankName || '',
-        accountNumber: donation.mandal.accountNumber || '',
-        ifscCode: donation.mandal.ifscCode || '',
-        presidentName: donation.mandal.presidentName || '',
-        secretaryName: donation.mandal.secretaryName || '',
-        treasurerName: donation.mandal.treasurerName || '',
+        id: mandal._id ? mandal._id.toString() : 'mandal-1',
+        name: mandal.name,
+        tagline: mandal.tagline || 'न्यू युवा बॉईज - भव्य सार्वजनिक गणेशोत्सव २०२६',
+        registrationNumber: mandal.registrationNo || 'महा/केऱ्हाळे/२०२६',
+        establishedYear: mandal.establishedYear || 2012,
+        address: mandal.address || 'मेन चौक, केऱ्हाळे बुद्रुक (Kerhale Bk.)',
+        city: mandal.city || 'केऱ्हाळे बु.',
+        logoUrl: mandal.logoUrl || undefined,
+        upiId: mandal.upiId || '9923092340@ybl',
+        activeYear: mandal.activeYear || 2026,
+        cashInHand: mandal.cashInHand || 0,
+        bankBalance: mandal.bankBalance || 0,
+        bankName: mandal.bankName || 'स्टेट बँक ऑफ इंडिया (केऱ्हाळे शाखा)',
+        accountNumber: mandal.accountNumber || '३९४८२९१०३९४',
+        ifscCode: mandal.ifscCode || 'SBIN0001234',
+        presidentName: mandal.presidentName || 'श्री. निलेश पाटील (अध्यक्ष)',
+        secretaryName: mandal.secretaryName || 'श्री. सचिन तायडे (सचिव)',
+        treasurerName: mandal.treasurerName || 'श्री. भूषण चौधरी (खजिनदार)',
       }
     : null;
 

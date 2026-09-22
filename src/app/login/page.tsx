@@ -76,15 +76,16 @@ export default function LoginPage() {
     try {
       setLoading(true);
       setMessage(null);
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
+
+      // 1. Sign in via NextAuth credentials provider with email and OTP
+      const result = await signIn('credentials', {
+        email,
+        otp,
+        redirect: false,
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'अवैध OTP.');
+      if (result?.error) {
+        throw new Error('अवैध किंवा कालबाह्य झालेला OTP. कृपया पुन्हा प्रयत्न करा.');
       }
 
       confetti({
@@ -93,11 +94,16 @@ export default function LoginPage() {
         origin: { y: 0.6 },
       });
 
-      // Save user session in localStorage
-      localStorage.setItem('mandalbook_user', JSON.stringify(data.user));
-      localStorage.setItem('mandalbook_role', data.user.role);
+      // 2. Save user info for offline fast access
+      const userObj = { email, name: email.split('@')[0], role: 'VOLUNTEER' };
+      localStorage.setItem('mandalbook_user', JSON.stringify(userObj));
+      localStorage.setItem('mandalbook_role', 'VOLUNTEER');
 
-      router.push('/');
+      const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const targetUrl = params?.get('callbackUrl') || '/';
+
+      router.push(targetUrl);
+      router.refresh();
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'सत्यापन अयशस्वी झाले.' });
     } finally {

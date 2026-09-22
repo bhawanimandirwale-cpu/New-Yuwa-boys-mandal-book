@@ -3,6 +3,7 @@ import { Baloo_2, Mukta } from 'next/font/google';
 import './globals.css';
 import { I18nProvider } from '@/lib/i18n/context';
 import { AppContextProvider } from '@/lib/context/AppContext';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { GlobalModals } from '@/components/layout/GlobalModals';
@@ -55,18 +56,20 @@ export default function RootLayout({
         <meta name="google" content="notranslate" />
       </head>
       <body className="min-h-screen bg-gray-50/50 text-gray-900 font-body antialiased flex flex-col selection:bg-saffron-500 selection:text-white">
-        <I18nProvider>
-          <AppContextProvider>
-            <div className="flex-1 flex flex-col min-h-screen">
-              <AppHeader />
-              <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 sm:pb-12">
-                {children}
-              </main>
-              <BottomNav />
-              <GlobalModals />
-            </div>
-          </AppContextProvider>
-        </I18nProvider>
+        <AuthProvider>
+          <I18nProvider>
+            <AppContextProvider>
+              <div className="flex-1 flex flex-col min-h-screen">
+                <AppHeader />
+                <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 sm:pb-12">
+                  {children}
+                </main>
+                <BottomNav />
+                <GlobalModals />
+              </div>
+            </AppContextProvider>
+          </I18nProvider>
+        </AuthProvider>
       </body>
     </html>
   );

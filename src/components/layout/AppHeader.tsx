@@ -22,8 +22,10 @@ import {
   Receipt,
   FileSpreadsheet,
   FileCheck,
-  Plus
+  Plus,
+  LogOut
 } from 'lucide-react';
+import { signOut, useSession } from 'next-auth/react';
 
 const roleLabels: Record<UserRole, { title: string; icon: any; color: string }> = {
   ADMIN: { title: 'अध्यक्ष', icon: ShieldAlert, color: 'bg-red-50 text-red-700 border-red-200' },
@@ -47,6 +49,7 @@ export function AppHeader() {
     { label: t('dashboard'), href: '/', icon: LayoutDashboard },
     { label: t('donations'), href: '/donations', icon: HandCoins },
     { label: t('expenses'), href: '/expenses', icon: Receipt },
+    { label: 'कार्यकर्ते', href: '/members', icon: Users },
     { label: t('reports'), href: '/reports', icon: FileSpreadsheet },
     { label: t('documents'), href: '/documents', icon: FileCheck },
   ];
@@ -238,6 +241,19 @@ export function AppHeader() {
               </div>
             )}
           </div>
+
+          {/* Logout Button */}
+          <button
+            onClick={() => {
+              localStorage.removeItem('mandalbook_user');
+              localStorage.removeItem('mandalbook_role');
+              signOut({ callbackUrl: '/login' });
+            }}
+            className="p-1.5 text-xs font-medium rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 border border-gray-200 transition-colors"
+            title="बाहेर पडा (Logout)"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>

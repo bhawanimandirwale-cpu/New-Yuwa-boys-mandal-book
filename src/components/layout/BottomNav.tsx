@@ -10,7 +10,7 @@ import {
   HandCoins, 
   Receipt, 
   FileSpreadsheet, 
-  FileCheck,
+  Users,
   Plus
 } from 'lucide-react';
 
@@ -25,8 +25,8 @@ export function BottomNav() {
     { label: t('dashboard'), href: '/', icon: LayoutDashboard },
     { label: t('donations'), href: '/donations', icon: HandCoins },
     { label: t('expenses'), href: '/expenses', icon: Receipt },
+    { label: 'कार्यकर्ते', href: '/members', icon: Users },
     { label: t('reports'), href: '/reports', icon: FileSpreadsheet },
-    { label: t('documents'), href: '/documents', icon: FileCheck },
   ];
 
   return (

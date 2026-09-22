@@ -24,6 +24,17 @@ const handler = NextAuth({
 
         await connectToDatabase();
         const normalizedEmail = credentials.email.toLowerCase().trim();
+        const otp = credentials.otp?.trim();
+
+        // Verify token in OtpToken collection
+        if (otp) {
+          const { OtpToken } = await import('@/models/OtpToken');
+          const tokenRecord = await OtpToken.findOne({ email: normalizedEmail, otp });
+          if (!tokenRecord || new Date() > tokenRecord.expiresAt) {
+            return null;
+          }
+          await OtpToken.deleteOne({ _id: tokenRecord._id });
+        }
 
         let user = await User.findOne({ email: normalizedEmail });
         if (!user) {
@@ -34,11 +45,28 @@ const handler = NextAuth({
           });
         }
 
+        const mandal = await Mandal.findOne();
+        let role = 'VOLUNTEER';
+        if (mandal) {
+          let member = await MandalMember.findOne({ mandalId: mandal._id, userId: user._id });
+          if (!member) {
+            member = await MandalMember.create({
+              mandalId: mandal._id,
+              userId: user._id,
+              role: 'VOLUNTEER',
+              status: 'ACTIVE',
+            });
+          }
+          role = member.role;
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
-        };
+          role,
+          mandalId: mandal?._id.toString(),
+        } as any;
       },
     }),
   ],
@@ -73,9 +101,31 @@ const handler = NextAuth({
       }
       return true;
     },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role || 'VOLUNTEER';
+        token.mandalId = (user as any).mandalId;
+      } else if (!token.role && token.email) {
+        await connectToDatabase();
+        const dbUser = await User.findOne({ email: token.email });
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          const mandal = await Mandal.findOne();
+          if (mandal) {
+            token.mandalId = mandal._id.toString();
+            const member = await MandalMember.findOne({ mandalId: mandal._id, userId: dbUser._id });
+            token.role = member ? member.role : 'VOLUNTEER';
+          }
+        }
+      }
+      return token;
+    },
     async session({ session, token }) {
-      if (session?.user && token?.sub) {
-        (session.user as any).id = token.sub;
+      if (session?.user) {
+        (session.user as any).id = token.id || token.sub;
+        (session.user as any).role = token.role || 'VOLUNTEER';
+        (session.user as any).mandalId = token.mandalId;
       }
       return session;
     },
