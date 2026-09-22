@@ -20,6 +20,7 @@ export interface MandalInfo {
   vicePresidentName?: string;
   secretaryName: string;
   treasurerName: string;
+  inviteCode?: string;
 }
 
 export interface UserProfile {

@@ -37,7 +37,8 @@ const roleLabels: Record<UserRole, { title: string; icon: any; color: string }> 
 
 export function AppHeader() {
   const pathname = usePathname();
-  const { mandal, currentRole, setRole, activeYear, setYear, setIsAddDonationOpen } = useApp();
+  const { mandal, currentRole, setRole, activeYear, setYear, setIsAddDonationOpen, setIsAccountProfileOpen } = useApp();
+  const { data: session } = useSession();
   const { language, setLanguage, isMarathi, t } = useI18n();
 
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
@@ -270,6 +271,26 @@ export function AppHeader() {
             <Download className="w-3.5 h-3.5 animate-bounce" />
             <span className="hidden md:inline">ॲप इन्स्टॉल करा</span>
             <span className="md:hidden">इन्स्टॉल</span>
+          </button>
+
+          {/* Account Profile Button */}
+          <button
+            type="button"
+            onClick={() => setIsAccountProfileOpen(true)}
+            className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 text-xs font-bold rounded-lg bg-orange-50/80 text-gray-800 border border-saffron-200 hover:bg-orange-100 transition-all active:scale-95 cursor-pointer"
+            title="माझे खाते व प्रोफाईल तपशील (Account Details)"
+          >
+            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-saffron-600 to-amber-500 text-white flex items-center justify-center font-black text-[10px] shrink-0 overflow-hidden shadow-2xs">
+              {session?.user?.image ? (
+                <img src={session.user.image} alt={session.user.name || ''} className="w-full h-full object-cover" />
+              ) : (
+                (session?.user?.name || 'का').substring(0, 1).toUpperCase()
+              )}
+            </div>
+            <span className="hidden xl:inline max-w-[110px] truncate">
+              {session?.user?.name || 'माझे खाते'}
+            </span>
+            <span className="xl:hidden">खाते</span>
           </button>
 
           {/* Logout Button */}

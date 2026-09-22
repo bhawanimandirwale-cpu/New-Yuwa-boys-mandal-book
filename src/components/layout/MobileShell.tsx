@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export function MobileTopBar() {
-  const { mandal, activeYear, setYear, currentRole, setIsResetAccountsOpen } = useApp();
+  const { mandal, activeYear, setYear, currentRole, setIsResetAccountsOpen, setIsAccountProfileOpen } = useApp();
   const { data: session } = useSession();
 
   const [yearOpen, setYearOpen] = useState(false);
@@ -169,10 +169,23 @@ export function MobileTopBar() {
                   </div>
                 </div>
 
-                <div className="pt-2 space-y-1">
-                  <div className="px-2 py-1 text-[10px] text-gray-400 font-medium truncate">
+                <div className="pt-2 space-y-1.5">
+                  <div className="px-2 py-0.5 text-[10px] text-gray-400 font-medium truncate">
                     {session?.user?.email || 'मंडळ युझर'}
                   </div>
+
+                  {/* Open Account Details Modal */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileOpen(false);
+                      setIsAccountProfileOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-2 text-xs font-bold text-saffron-800 hover:bg-orange-50 rounded-xl transition-colors border border-saffron-200/90 bg-orange-50/60 shadow-2xs cursor-pointer"
+                  >
+                    <User className="w-3.5 h-3.5 text-saffron-600 shrink-0" />
+                    <span>माझे खाते (Account Profile)</span>
+                  </button>
                   {currentRole === 'ADMIN' && (
                     <button
                       type="button"

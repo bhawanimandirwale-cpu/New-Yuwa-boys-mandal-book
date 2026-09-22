@@ -45,6 +45,8 @@ interface AppContextType {
   setIsAddExpenseOpen: (open: boolean) => void;
   isResetAccountsOpen: boolean;
   setIsResetAccountsOpen: (open: boolean) => void;
+  isAccountProfileOpen: boolean;
+  setIsAccountProfileOpen: (open: boolean) => void;
   selectedReceiptForShare: VarganiDonationItem | null;
   setSelectedReceiptForShare: (item: VarganiDonationItem | null) => void;
 }
@@ -77,6 +79,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [isAddDonationOpen, setIsAddDonationOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isResetAccountsOpen, setIsResetAccountsOpen] = useState(false);
+  const [isAccountProfileOpen, setIsAccountProfileOpen] = useState(false);
   const [selectedReceiptForShare, setSelectedReceiptForShare] = useState<VarganiDonationItem | null>(null);
 
   const { data: session } = useSession();
@@ -214,6 +217,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         setIsAddExpenseOpen,
         isResetAccountsOpen,
         setIsResetAccountsOpen,
+        isAccountProfileOpen,
+        setIsAccountProfileOpen,
         selectedReceiptForShare,
         setSelectedReceiptForShare,
       }}
