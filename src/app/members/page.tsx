@@ -236,15 +236,17 @@ export default function MembersPage() {
     }
   };
 
-  // Filtered members
-  const filtered = members.filter((m) => {
-    const matchesSearch =
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.phone.includes(search) ||
-      m.email.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = roleFilter === 'ALL' || m.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+  // Filtered members with leaderboard sorting by totalCollected descending
+  const filtered = members
+    .filter((m) => {
+      const matchesSearch =
+        m.name.toLowerCase().includes(search.toLowerCase()) ||
+        m.phone.includes(search) ||
+        m.email.toLowerCase().includes(search.toLowerCase());
+      const matchesRole = roleFilter === 'ALL' || m.role === roleFilter;
+      return matchesSearch && matchesRole;
+    })
+    .sort((a, b) => (b.totalCollected || 0) - (a.totalCollected || 0));
 
   const totalMembers = members.length;
   const activeVolunteers = members.filter((m) => m.status === 'ACTIVE').length;
@@ -437,9 +439,26 @@ export default function MembersPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    {/* Avatar */}
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-saffron-500 to-amber-400 text-white flex items-center justify-center font-black text-base shadow-sm shrink-0">
-                      {m.name.substring(0, 1).toUpperCase()}
+                    {/* Avatar with Leaderboard Rank Badge */}
+                    <div className="relative shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-saffron-500 to-amber-400 text-white flex items-center justify-center font-black text-base shadow-sm">
+                        {m.name.substring(0, 1).toUpperCase()}
+                      </div>
+                      {m.totalCollected > 0 && (
+                        <span
+                          className={`absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shadow-xs ${
+                            idx === 0
+                              ? 'bg-amber-400 text-amber-950 border border-amber-300'
+                              : idx === 1
+                              ? 'bg-slate-200 text-slate-800 border border-slate-300'
+                              : idx === 2
+                              ? 'bg-amber-700 text-white border border-amber-800'
+                              : 'bg-gray-100 text-gray-700 border border-gray-200'
+                          }`}
+                        >
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : toDevanagariDigits(idx + 1)}
+                        </span>
+                      )}
                     </div>
 
                     <div className="min-w-0">
@@ -602,17 +621,48 @@ export default function MembersPage() {
         </div>
       )}
 
-      {/* 6. "＋ नवीन कार्यकर्ता जोडा" Modal */}
+      {/* Floating 1-Tap WhatsApp Committee Invite Button (Mobile Thumb Zone) */}
+      <div className="fixed bottom-20 right-3.5 z-30 sm:hidden">
+        <button
+          type="button"
+          onClick={() => {
+            handleCopyLink();
+            handleShareWhatsApp();
+          }}
+          className="px-4 py-2.5 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs shadow-xl shadow-emerald-600/40 flex items-center gap-1.5 active:scale-90 transition-all border-2 border-white"
+          title="कार्यकर्त्यांना WhatsApp आमंत्रण पाठवा"
+        >
+          <Share2 className="w-4 h-4 stroke-[2.5]" />
+          <span>WhatsApp आमंत्रण ({inviteCode})</span>
+        </button>
+      </div>
+
+      {/* 6. "＋ नवीन कार्यकर्ता जोडा" Slide-up Mobile Drawer */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+        <>
+          <div 
+            className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={() => setIsAddOpen(false)}
+          />
+
+          <div 
+            className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto bg-white rounded-t-[2rem] shadow-2xl border-t-2 border-saffron-500 max-h-[92vh] flex flex-col notranslate animate-in slide-in-from-bottom-8 duration-200"
+            style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Swipe Handle */}
+            <div className="pt-2.5 pb-1 flex justify-center cursor-pointer" onClick={() => setIsAddOpen(false)}>
+              <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+            </div>
+
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-saffron-500 to-saffron-600 text-white flex items-center justify-between">
+            <div className="px-5 py-2.5 bg-gradient-to-r from-saffron-500 to-saffron-600 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5" />
                 <h2 className="font-black text-base font-heading">नवीन कार्यकर्ता / सदस्य जोडा</h2>
               </div>
               <button
+                type="button"
                 onClick={() => setIsAddOpen(false)}
                 className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white"
               >
@@ -621,86 +671,90 @@ export default function MembersPage() {
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handleAddMember} className="p-5 space-y-3.5">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  पूर्ण नाव (Full Name) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="उदा. राहुल दीपक शिंदे"
-                  value={addName}
-                  onChange={(e) => setAddName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 font-medium"
-                />
-              </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <form onSubmit={handleAddMember} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    पूर्ण नाव (Full Name) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    autoCapitalize="words"
+                    placeholder="उदा. राहुल दीपक शिंदे"
+                    value={addName}
+                    onChange={(e) => setAddName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 font-bold text-gray-900"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  मोबाईल नंबर (WhatsApp Mobile) *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="उदा. 9876543210"
-                  value={addPhone}
-                  onChange={(e) => setAddPhone(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 font-medium"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    मोबाईल नंबर (WhatsApp Mobile) *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    placeholder="उदा. ९८७६५४३२१०"
+                    value={addPhone}
+                    onChange={(e) => setAddPhone(e.target.value.replace(/\D/g, '').slice(-10))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 font-bold text-gray-900"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  ईमेल (पर्यायी - Gmail)
-                </label>
-                <input
-                  type="email"
-                  placeholder="उदा. name@gmail.com"
-                  value={addEmail}
-                  onChange={(e) => setAddEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 font-medium"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ईमेल (पर्यायी - Gmail)
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="उदा. name@gmail.com"
+                    value={addEmail}
+                    onChange={(e) => setAddEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 font-medium"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  पद / भूमिका (Role) *
-                </label>
-                <select
-                  value={addRole}
-                  onChange={(e) => setAddRole(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 bg-white"
-                >
-                  <option value="VOLUNTEER">कार्यकर्ता (Field Collector - वर्गणी पावती अधिकार)</option>
-                  <option value="TREASURER">खजिनदार (Treasurer - खर्च मंजूरी व संपूर्ण ताळेबंद)</option>
-                  <option value="ADMIN">अध्यक्ष (Adhyaksh - मंडळ प्रमुख व सर्व अधिकार)</option>
-                  <option value="MEMBER">सदस्य (General Member - फक्त पाहण्याचा अधिकार)</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    पद / भूमिका (Role) *
+                  </label>
+                  <select
+                    value={addRole}
+                    onChange={(e) => setAddRole(e.target.value as any)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-saffron-500/30 focus:border-saffron-500 bg-white"
+                  >
+                    <option value="VOLUNTEER">कार्यकर्ता (Field Collector - वर्गणी पावती अधिकार)</option>
+                    <option value="TREASURER">खजिनदार (Treasurer - खर्च मंजूरी व संपूर्ण ताळेबंद)</option>
+                    <option value="ADMIN">अध्यक्ष (Adhyaksh - मंडळ प्रमुख व सर्व अधिकार)</option>
+                    <option value="MEMBER">सदस्य (General Member - फक्त पाहण्याचा अधिकार)</option>
+                  </select>
+                </div>
 
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-saffron-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>जतन होत आहे...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>कार्यकर्ता जतन करा</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white font-extrabold text-sm shadow-md shadow-saffron-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>जतन होत आहे...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>कार्यकर्ता जतन करा</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

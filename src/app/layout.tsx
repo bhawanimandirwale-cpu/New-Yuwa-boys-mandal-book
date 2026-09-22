@@ -5,6 +5,7 @@ import { I18nProvider } from '@/lib/i18n/context';
 import { AppContextProvider } from '@/lib/context/AppContext';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { AppHeader } from '@/components/layout/AppHeader';
+import { MobileTopBar } from '@/components/layout/MobileShell';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { GlobalModals } from '@/components/layout/GlobalModals';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
@@ -69,8 +70,13 @@ export default function RootLayout({
           <I18nProvider>
             <AppContextProvider>
               <div className="flex-1 flex flex-col min-h-screen">
-                <AppHeader />
-                <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 sm:pb-12">
+                <div className="hidden sm:block">
+                  <AppHeader />
+                </div>
+                <div className="sm:hidden">
+                  <MobileTopBar />
+                </div>
+                <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-6 pb-28 sm:pb-12">
                   {children}
                 </main>
                 <BottomNav />

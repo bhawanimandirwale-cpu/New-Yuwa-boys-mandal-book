@@ -1,16 +1,16 @@
 'use client';
 
 import React from 'react';
-import { DonationModal } from '@/components/donations/DonationModal';
-import { ExpenseModal } from '@/components/expenses/ExpenseModal';
+import { CollectDrawer } from '@/components/vargani/CollectDrawer';
+import { AddExpenseDrawer } from '@/components/expense/AddExpenseDrawer';
 import { ReceiptShareModal } from '@/components/receipts/ReceiptShareModal';
 import { InstallPromptModal } from '@/components/pwa/InstallPromptModal';
 
 export function GlobalModals() {
   return (
     <>
-      <DonationModal />
-      <ExpenseModal />
+      <CollectDrawer />
+      <AddExpenseDrawer />
       <ReceiptShareModal />
       <InstallPromptModal />
     </>
