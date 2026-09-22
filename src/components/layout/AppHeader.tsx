@@ -23,7 +23,8 @@ import {
   FileSpreadsheet,
   FileCheck,
   Plus,
-  LogOut
+  LogOut,
+  Download
 } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 
@@ -252,6 +253,20 @@ export function AppHeader() {
               </div>
             )}
           </div>
+
+          {/* PWA Install Button */}
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('open-pwa-install'));
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-extrabold rounded-lg bg-gradient-to-r from-saffron-500 to-amber-500 text-white hover:from-saffron-600 hover:to-amber-600 shadow-sm transition-all active:scale-95 cursor-pointer"
+            title="मोबाईलच्या होम स्क्रीनवर ॲप इन्स्टॉल करा"
+          >
+            <Download className="w-3.5 h-3.5 animate-bounce" />
+            <span className="hidden md:inline">ॲप इन्स्टॉल करा</span>
+            <span className="md:hidden">इन्स्टॉल</span>
+          </button>
 
           {/* Logout Button */}
           <button

@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { GlobalModals } from '@/components/layout/GlobalModals';
+import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 
 const baloo = Baloo_2({
   subsets: ['latin', 'devanagari'],
@@ -66,6 +67,7 @@ export default function RootLayout({
                 </main>
                 <BottomNav />
                 <GlobalModals />
+                <ServiceWorkerRegister />
               </div>
             </AppContextProvider>
           </I18nProvider>

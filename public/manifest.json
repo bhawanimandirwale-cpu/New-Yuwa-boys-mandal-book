@@ -3,10 +3,13 @@
   "short_name": "न्यू युवा बॉईज",
   "description": "न्यू युवा गणेश मंडळ, केऱ्हाळे बुद्रुक (Kerhale Bk.) डिजिटल जमा-खर्च, वर्गणी पावती व ताळेबंद प्रणाली",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#F67020",
   "orientation": "portrait",
+  "categories": ["finance", "utilities"],
   "icons": [
     {
       "src": "/icon.svg",
