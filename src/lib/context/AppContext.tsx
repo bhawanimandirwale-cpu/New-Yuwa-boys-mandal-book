@@ -43,6 +43,8 @@ interface AppContextType {
   setIsAddDonationOpen: (open: boolean) => void;
   isAddExpenseOpen: boolean;
   setIsAddExpenseOpen: (open: boolean) => void;
+  isResetAccountsOpen: boolean;
+  setIsResetAccountsOpen: (open: boolean) => void;
   selectedReceiptForShare: VarganiDonationItem | null;
   setSelectedReceiptForShare: (item: VarganiDonationItem | null) => void;
 }
@@ -74,6 +76,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   // Modals state
   const [isAddDonationOpen, setIsAddDonationOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isResetAccountsOpen, setIsResetAccountsOpen] = useState(false);
   const [selectedReceiptForShare, setSelectedReceiptForShare] = useState<VarganiDonationItem | null>(null);
 
   const { data: session } = useSession();
@@ -209,6 +212,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         setIsAddDonationOpen,
         isAddExpenseOpen,
         setIsAddExpenseOpen,
+        isResetAccountsOpen,
+        setIsResetAccountsOpen,
         selectedReceiptForShare,
         setSelectedReceiptForShare,
       }}

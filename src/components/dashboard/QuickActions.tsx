@@ -12,7 +12,8 @@ import {
   MessageSquare, 
   Check, 
   Copy,
-  ExternalLink 
+  ExternalLink,
+  RotateCcw 
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,6 +21,7 @@ export function QuickActions() {
   const { 
     setIsAddDonationOpen, 
     setIsAddExpenseOpen, 
+    setIsResetAccountsOpen,
     currentRole, 
     mandal, 
     stats 
@@ -140,6 +142,24 @@ ${typeof window !== 'undefined' ? window.location.origin : 'https://mandalbook.c
           <span>सरकारी परवानग्या (NOC)</span>
         </Link>
       </div>
+
+      {/* President Fresh Ledger Reset Trigger */}
+      {currentRole === 'ADMIN' && (
+        <div className="mt-3.5 pt-3 border-t border-orange-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="text-[11px] text-gray-700 font-medium flex items-center gap-1.5">
+            <span className="text-rose-600 font-bold">🚩 अध्यक्ष नियंत्रण:</span>
+            <span>नवीन वर्षासाठी हिशोब ₹० वरून पुन्हा नव्याने सुरू करायचा आहे का?</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsResetAccountsOpen(true)}
+            className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs border border-rose-300 shadow-sm shrink-0 active:scale-95 transition-all self-start sm:self-auto"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-rose-600" />
+            <span>हिशोब शून्यापासून सुरू करा (Reset)</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

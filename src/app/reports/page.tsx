@@ -13,11 +13,12 @@ import {
   Check, 
   Sparkles, 
   Scale, 
-  ShieldCheck 
+  ShieldCheck,
+  RotateCcw 
 } from 'lucide-react';
 
 export default function ReportsPage() {
-  const { mandal, stats, donations, expenses, activeYear } = useApp();
+  const { mandal, stats, donations, expenses, activeYear, currentRole, setIsResetAccountsOpen } = useApp();
   const { isMarathi } = useI18n();
 
   const [copiedDaily, setCopiedDaily] = useState(false);
@@ -102,6 +103,17 @@ export default function ReportsPage() {
             <Printer className="w-3.5 h-3.5" />
             <span>ताळेबंद प्रिंट / PDF</span>
           </button>
+
+          {currentRole === 'ADMIN' && (
+            <button
+              onClick={() => setIsResetAccountsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-colors"
+              title="फक्त अध्यक्ष: सर्व व्यवहार डिलीट करून नवीन हिशोब सुरू करा"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-rose-600" />
+              <span>हिशोब नव्याने सुरू करा</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -258,6 +270,32 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
+
+      {/* President Accounts Reset Control Card (No-print, Visible Only to Admin) */}
+      {currentRole === 'ADMIN' && (
+        <div className="no-print p-4 sm:p-5 rounded-3xl bg-rose-50/70 border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 border border-rose-200">
+              <RotateCcw className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-rose-950 font-heading text-sm">
+                🚩 अध्यक्षीय नियंत्रण: नवीन वर्षाचा हिशोब नव्याने सुरू करणे
+              </div>
+              <div className="text-[11px] text-gray-600 mt-0.5">
+                नवीन उत्सव किंवा वर्षाचा हिशोब ₹० वरून सुरू करण्यासाठी चालू सर्व जमा पावत्या व खर्च रीसेट करा.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsResetAccountsOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs shadow-md shadow-rose-600/20 active:scale-95 transition-all whitespace-nowrap self-start sm:self-auto flex items-center gap-2"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>हिशोब शून्यापासून सुरू करा (Reset)</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

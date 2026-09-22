@@ -14,11 +14,12 @@ import {
   User, 
   X,
   Calendar,
-  CheckCircle2
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react';
 
 export function MobileTopBar() {
-  const { mandal, activeYear, setYear, currentRole } = useApp();
+  const { mandal, activeYear, setYear, currentRole, setIsResetAccountsOpen } = useApp();
   const { data: session } = useSession();
 
   const [yearOpen, setYearOpen] = useState(false);
@@ -172,6 +173,19 @@ export function MobileTopBar() {
                   <div className="px-2 py-1 text-[10px] text-gray-400 font-medium truncate">
                     {session?.user?.email || 'मंडळ युझर'}
                   </div>
+                  {currentRole === 'ADMIN' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsResetAccountsOpen(true);
+                        setProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 rounded-xl transition-colors border border-rose-100/80 bg-rose-50/40"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                      <span>हिशोब नव्याने सुरू करा</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: '/login' })}
