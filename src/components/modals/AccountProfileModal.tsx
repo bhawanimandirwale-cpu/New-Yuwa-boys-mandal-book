@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useApp } from '@/lib/context/AppContext';
-import { toDevanagariDigits } from '@/lib/numberToWordsMarathi';
+import { toDevanagariDigits } from '@/lib/formatters';
 import {
   X,
   User,

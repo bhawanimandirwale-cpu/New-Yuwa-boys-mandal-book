@@ -162,3 +162,5 @@ export function numberToWordsMarathi(num: number): string {
 
   return `${words.trim()} रुपये फक्त`;
 }
+
+export { toDevanagariDigits } from './formatters';
