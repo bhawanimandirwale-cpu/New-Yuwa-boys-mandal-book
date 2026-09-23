@@ -67,11 +67,11 @@ export function BottomNav() {
   };
 
   const navItems = [
-    { label: 'होम', href: '/', icon: Home, color: 'text-saffron-600', activeBg: 'bg-saffron-500/15 border-saffron-500/30' },
-    { label: 'पावत्या', href: '/donations', icon: Receipt, color: 'text-saffron-600', activeBg: 'bg-saffron-500/15 border-saffron-500/30' },
-    { label: 'खर्च', href: '/expenses', icon: Wallet, color: 'text-rose-600', activeBg: 'bg-rose-500/15 border-rose-500/30' },
-    { label: 'कार्यकर्ते', href: '/members', icon: Users, color: 'text-amber-600', activeBg: 'bg-amber-500/15 border-amber-500/30' },
-    { label: 'कागदपत्रे', href: '/documents', icon: FileText, color: 'text-blue-600', activeBg: 'bg-blue-500/15 border-blue-500/30' },
+    { label: 'होम', href: '/', icon: Home, color: 'text-saffron-600' },
+    { label: 'पावत्या', href: '/donations', icon: Receipt, color: 'text-saffron-600' },
+    { label: 'खर्च', href: '/expenses', icon: Wallet, color: 'text-rose-600' },
+    { label: 'कार्यकर्ते', href: '/members', icon: Users, color: 'text-amber-600' },
+    { label: 'कागदपत्रे', href: '/documents', icon: FileText, color: 'text-blue-600' },
   ];
 
   return (
@@ -80,7 +80,7 @@ export function BottomNav() {
       onMouseMove={handlePointerMove}
       onTouchMove={handlePointerMove}
       onMouseLeave={resetEyes}
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/10 dark:bg-black/10 backdrop-blur-2xl border-t border-white/25 sm:hidden notranslate shadow-[0_-4px_30px_rgba(0,0,0,0.04)]"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-transparent sm:hidden notranslate"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
     >
       <div className="flex items-center justify-between px-2 h-16 max-w-md mx-auto relative">
@@ -95,9 +95,9 @@ export function BottomNav() {
               onClick={triggerHaptic}
               className="flex-1 py-1 relative flex flex-col items-center justify-center select-none"
             >
-              {/* Creepy-Button Motion Wrapper */}
+              {/* Creepy-Button Motion Wrapper (Zero background) */}
               <motion.div
-                className="relative flex flex-col items-center justify-center px-2 py-1 rounded-2xl w-full"
+                className="relative flex flex-col items-center justify-center px-2 py-1 w-full bg-transparent"
                 whileHover={{ scale: 1.15, rotate: -7 }}
                 whileTap={{ scale: 0.88, rotate: 7 }}
                 transition={{
@@ -119,8 +119,8 @@ export function BottomNav() {
                     >
                       {/* Left Eye */}
                       <motion.span
-                        className="relative w-2 h-2 bg-white rounded-full overflow-hidden shadow-xs border border-gray-300"
-                        animate={{ height: ['8px', '8px', '0px', '8px'] }}
+                        className="relative w-2.5 h-2.5 bg-white rounded-full overflow-hidden shadow-xs border border-gray-400"
+                        animate={{ height: ['9px', '9px', '0px', '9px'] }}
                         transition={{
                           duration: 2.8,
                           times: [0, 0.92, 0.96, 1],
@@ -136,8 +136,8 @@ export function BottomNav() {
 
                       {/* Right Eye */}
                       <motion.span
-                        className="relative w-2 h-2 bg-white rounded-full overflow-hidden shadow-xs border border-gray-300"
-                        animate={{ height: ['8px', '8px', '0px', '8px'] }}
+                        className="relative w-2.5 h-2.5 bg-white rounded-full overflow-hidden shadow-xs border border-gray-400"
+                        animate={{ height: ['9px', '9px', '0px', '9px'] }}
                         transition={{
                           duration: 2.8,
                           times: [0, 0.92, 0.96, 1],
@@ -153,15 +153,6 @@ export function BottomNav() {
                     </motion.span>
                   )}
                 </AnimatePresence>
-
-                {/* Active Indicator Glass Glow Pill */}
-                {isActive && (
-                  <motion.span
-                    layoutId="creepyNavActivePill"
-                    className={`absolute inset-0 rounded-2xl -z-10 border backdrop-blur-md ${item.activeBg}`}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
 
                 {/* Icon with Creepy tilt dynamics */}
                 <Icon
