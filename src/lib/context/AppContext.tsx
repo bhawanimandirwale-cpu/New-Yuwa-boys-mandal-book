@@ -153,7 +153,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...donationData, year: activeYear }),
     });
-    if (!res.ok) throw new Error('Failed to create donation');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to create donation');
+    }
     const created = await res.json();
     await refresh();
     return created;
@@ -165,7 +168,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...expenseData, year: activeYear }),
     });
-    if (!res.ok) throw new Error('Failed to create expense');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Failed to create expense');
+    }
     const created = await res.json();
     await refresh();
     return created;

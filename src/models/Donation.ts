@@ -4,7 +4,7 @@ export interface IDonation extends Document {
   mandalId: mongoose.Types.ObjectId;
   receiptNo: string;
   donorName: string;
-  donorPhone: string;
+  donorPhone?: string;
   buildingFlat?: string;
   amount: number;
   amountInWords?: string;
@@ -25,7 +25,7 @@ const DonationSchema: Schema<IDonation> = new Schema(
     mandalId: { type: Schema.Types.ObjectId, ref: 'Mandal', required: true, index: true },
     receiptNo: { type: String, required: true, index: true },
     donorName: { type: String, required: true, trim: true },
-    donorPhone: { type: String, required: true, trim: true },
+    donorPhone: { type: String, default: '', trim: true },
     buildingFlat: { type: String, default: '' },
     amount: { type: Number, required: true, min: 0 },
     amountInWords: { type: String, default: '' },

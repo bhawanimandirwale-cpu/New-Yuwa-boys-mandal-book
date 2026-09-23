@@ -60,10 +60,23 @@ export async function POST(req: NextRequest) {
 
     const year = body.year ? parseInt(body.year) : mandal.activeYear || 2026;
 
-    // Auto-generate sequential receipt number
-    const count = await Donation.countDocuments({ mandalId: mandal._id, year });
-    const padded = String(count + 101).padStart(5, '0');
-    const receiptNo = `MB-${year}-${padded}`;
+    // Auto-generate sequential receipt number safely
+    let receiptNo = '';
+    const baseCount = await Donation.countDocuments({ mandalId: mandal._id, year });
+    let attempts = 0;
+    while (attempts < 20) {
+      const padded = String(baseCount + 101 + attempts).padStart(5, '0');
+      const candidate = `MB-${year}-${padded}`;
+      const exists = await Donation.exists({ mandalId: mandal._id, receiptNo: candidate });
+      if (!exists) {
+        receiptNo = candidate;
+        break;
+      }
+      attempts++;
+    }
+    if (!receiptNo) {
+      receiptNo = `MB-${year}-${Date.now().toString().slice(-6)}`;
+    }
 
     const numericAmount = parseFloat(body.amount) || 0;
     const amountInWords = numberToWordsMarathi(numericAmount);
@@ -71,19 +84,19 @@ export async function POST(req: NextRequest) {
     const newDonation = await Donation.create({
       mandalId: mandal._id,
       receiptNo,
-      donorName: body.donorName,
-      donorPhone: body.donorPhone || '',
-      buildingFlat: body.buildingFlat || '',
+      donorName: (body.donorName || '').trim(),
+      donorPhone: (body.donorPhone || '').trim(),
+      buildingFlat: (body.buildingFlat || '').trim(),
       amount: numericAmount,
       amountInWords,
       paymentMode: body.paymentMode || 'CASH',
       isInKind: Boolean(body.isInKind),
-      inKindDetails: body.inKindDetails || '',
-      collectorName: body.collectorName || 'न्यू युवा बॉईज कार्यकर्ता',
+      inKindDetails: (body.inKindDetails || '').trim(),
+      collectorName: (body.collectorName || 'न्यू युवा बॉईज कार्यकर्ता').trim(),
       year,
       status: body.status || 'PAID',
-      pledgeFollowUpDate: body.pledgeDate ? new Date(body.pledgeDate) : undefined,
-      notes: body.notes || '',
+      pledgeFollowUpDate: body.pledgeDate && !isNaN(new Date(body.pledgeDate).getTime()) ? new Date(body.pledgeDate) : undefined,
+      notes: (body.notes || '').trim(),
       createdAt: new Date(),
     });
 
@@ -100,8 +113,8 @@ export async function POST(req: NextRequest) {
     obj.id = newDonation._id.toString();
 
     return NextResponse.json(obj, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error recording donation in MongoDB Atlas:', error);
-    return NextResponse.json({ error: 'Failed to record donation' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to record donation' }, { status: 500 });
   }
 }
