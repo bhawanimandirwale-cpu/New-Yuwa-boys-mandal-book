@@ -624,21 +624,6 @@ export default function MembersPage() {
         </div>
       )}
 
-      {/* Floating 1-Tap WhatsApp Committee Invite Button (Mobile Thumb Zone) */}
-      <div className="fixed bottom-20 right-3.5 z-30 sm:hidden">
-        <button
-          type="button"
-          onClick={() => {
-            handleCopyLink();
-            handleShareWhatsApp();
-          }}
-          className="px-4 py-2.5 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs shadow-xl shadow-emerald-600/40 flex items-center gap-1.5 active:scale-90 transition-all border-2 border-white"
-          title="कार्यकर्त्यांना WhatsApp आमंत्रण पाठवा"
-        >
-          <Share2 className="w-4 h-4 stroke-[2.5]" />
-          <span>WhatsApp आमंत्रण ({inviteCode})</span>
-        </button>
-      </div>
 
       {/* 6. "＋ नवीन कार्यकर्ता जोडा" Slide-up Mobile Drawer */}
       {isAddOpen && (

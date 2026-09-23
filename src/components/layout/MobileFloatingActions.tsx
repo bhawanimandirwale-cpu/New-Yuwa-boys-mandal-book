@@ -3,7 +3,7 @@
 import React from 'react';
 import { useApp } from '@/lib/context/AppContext';
 import { Plus, Minus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { AnimatedButton } from '@/components/ui/animated-button';
 
 export function MobileFloatingActions() {
   const { setIsAddDonationOpen, setIsAddExpenseOpen, currentRole } = useApp();
@@ -11,7 +11,7 @@ export function MobileFloatingActions() {
   const isPublicMember = currentRole === 'MEMBER';
   if (isPublicMember) return null;
 
-  const triggerHaptic = (duration = 30) => {
+  const triggerHaptic = (duration = 25) => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate(duration);
@@ -23,47 +23,42 @@ export function MobileFloatingActions() {
 
   return (
     <div
-      className="fixed bottom-[72px] left-1/2 -translate-x-1/2 z-40 sm:hidden flex items-center justify-center notranslate pointer-events-auto"
+      className="fixed left-1/2 -translate-x-1/2 z-40 sm:hidden flex items-center justify-center gap-2 notranslate pointer-events-auto w-auto max-w-[96vw] px-2 select-none"
       style={{
-        marginBottom: 'max(env(safe-area-inset-bottom, 0px), 4px)',
+        bottom: 'calc(64px + max(env(safe-area-inset-bottom, 0px), 8px) + 16px)',
       }}
     >
-      {/* Sleek Floating Island / Capsule Dock */}
-      <div className="flex items-center gap-1.5 p-1 bg-white/85 dark:bg-black/50 backdrop-blur-xl rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.18)] border border-white/60 dark:border-white/15">
-        {/* 1. ＋ जमा नोंदवा (Donation Action) */}
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.94 }}
-          onClick={() => {
-            triggerHaptic(35);
-            setIsAddDonationOpen(true);
-          }}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-saffron-600 via-amber-500 to-saffron-500 text-white font-black text-xs shadow-md shadow-saffron-600/30 border border-white/60 active:brightness-95 transition-all select-none cursor-pointer"
-          title="वर्गणी जमा नोंदवा"
-        >
-          <div className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center shrink-0">
-            <Plus className="w-3 h-3 stroke-[3.5]" />
-          </div>
-          <span className="font-heading tracking-tight whitespace-nowrap">जमा नोंदवा</span>
-        </motion.button>
+      {/* 1. जमा नोंदवा (Animated Saffron Floating Action) */}
+      <AnimatedButton
+        type="button"
+        onClick={() => {
+          triggerHaptic(30);
+          setIsAddDonationOpen(true);
+        }}
+        className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-saffron-600 via-amber-500 to-saffron-600 text-white font-black text-xs shadow-[0_8px_20px_-3px_rgba(234,88,12,0.45)] border border-white/40 active:scale-95 transition-all whitespace-nowrap cursor-pointer hover:shadow-2xl"
+        title="वर्गणी जमा नोंदवा"
+      >
+        <div className="w-5 h-5 rounded-full bg-white/25 flex items-center justify-center shrink-0">
+          <Plus className="w-3.5 h-3.5 stroke-[3.5]" />
+        </div>
+        <span className="tracking-tight font-heading font-black">जमा नोंदवा</span>
+      </AnimatedButton>
 
-        {/* 2. － खर्च व्हाऊचर (Expense Action) */}
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.94 }}
-          onClick={() => {
-            triggerHaptic(25);
-            setIsAddExpenseOpen(true);
-          }}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-rose-600 via-rose-500 to-red-600 text-white font-black text-xs shadow-md shadow-rose-600/30 border border-white/60 active:brightness-95 transition-all select-none cursor-pointer"
-          title="खर्च व्हाऊचर नोंदवा"
-        >
-          <div className="w-4 h-4 rounded-full bg-white/25 flex items-center justify-center shrink-0">
-            <Minus className="w-3 h-3 stroke-[3.5]" />
-          </div>
-          <span className="font-heading tracking-tight whitespace-nowrap">खर्च व्हाऊचर</span>
-        </motion.button>
-      </div>
+      {/* 2. खर्च व्हाऊचर (Animated Rose Floating Action) */}
+      <AnimatedButton
+        type="button"
+        onClick={() => {
+          triggerHaptic(20);
+          setIsAddExpenseOpen(true);
+        }}
+        className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-rose-600 via-red-500 to-rose-600 text-white font-black text-xs shadow-[0_8px_20px_-3px_rgba(225,29,72,0.45)] border border-white/40 active:scale-95 transition-all whitespace-nowrap cursor-pointer hover:shadow-2xl"
+        title="खर्च व्हाऊचर नोंदवा"
+      >
+        <div className="w-5 h-5 rounded-full bg-white/25 flex items-center justify-center shrink-0">
+          <Minus className="w-3.5 h-3.5 stroke-[3.5]" />
+        </div>
+        <span className="tracking-tight font-heading font-black">खर्च व्हाऊचर</span>
+      </AnimatedButton>
     </div>
   );
 }

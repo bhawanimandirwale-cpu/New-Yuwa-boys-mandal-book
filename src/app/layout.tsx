@@ -77,7 +77,7 @@ export default function RootLayout({
                 <div className="sm:hidden">
                   <MobileTopBar />
                 </div>
-                <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-6 pb-36 sm:pb-12">
+                <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-6 pb-44 sm:pb-12">
                   {children}
                 </main>
                 <MobileFloatingActions />
