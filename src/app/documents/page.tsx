@@ -24,7 +24,9 @@ import {
   RotateCcw,
   Maximize2,
   Camera,
-  Loader2
+  Loader2,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 
 const CATEGORY_ICONS: Record<string, { label: string; icon: any; color: string; badgeColor: string }> = {
@@ -37,7 +39,7 @@ const CATEGORY_ICONS: Record<string, { label: string; icon: any; color: string; 
 };
 
 export default function DocumentsVaultPage() {
-  const { documents, addDocument, activeYear, currentRole } = useApp();
+  const { documents, addDocument, activeYear, currentRole, setDocumentToEdit } = useApp();
   const { isMarathi } = useI18n();
 
   const [previewDoc, setPreviewDoc] = useState<any | null>(null);
@@ -165,18 +167,33 @@ export default function DocumentsVaultPage() {
                 )}
               </div>
 
-              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-1 text-xs">
                 <span className="text-[11px] text-gray-400">
                   वर्ष: {isMarathi ? toDevanagariDigits(doc.year) : doc.year}
                 </span>
 
-                <button
-                  onClick={() => setPreviewDoc(doc)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>परवानगी पत्र उघडा</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {!isPublicMember && (
+                    <button
+                      type="button"
+                      onClick={() => setDocumentToEdit(doc)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs border border-amber-200 transition-colors active:scale-95 cursor-pointer"
+                      title="संपादित करा किंवा हटवा"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-amber-700" />
+                      <span>संपादित</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDoc(doc)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors active:scale-95 cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>उघडा</span>
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -203,7 +220,22 @@ export default function DocumentsVaultPage() {
             </div>
 
             {/* Quick Zoom Controls */}
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {!isPublicMember && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDocumentToEdit(previewDoc);
+                    setPreviewDoc(null);
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                  title="संपादित करा किंवा हटवा"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">संपादित</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setZoomScale((z) => Math.max(z - 0.5, 1))}

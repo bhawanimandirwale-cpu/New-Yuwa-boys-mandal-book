@@ -9,6 +9,7 @@ import { ResetAccountsModal } from '@/components/modals/ResetAccountsModal';
 import { AccountProfileModal } from '@/components/modals/AccountProfileModal';
 import { EditDonationModal } from '@/components/modals/EditDonationModal';
 import { EditExpenseModal } from '@/components/modals/EditExpenseModal';
+import { EditDocumentModal } from '@/components/modals/EditDocumentModal';
 
 export function GlobalModals() {
   return (
@@ -21,6 +22,7 @@ export function GlobalModals() {
       <AccountProfileModal />
       <EditDonationModal />
       <EditExpenseModal />
+      <EditDocumentModal />
     </>
   );
 }

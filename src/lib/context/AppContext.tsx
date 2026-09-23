@@ -38,6 +38,8 @@ interface AppContextType {
   addDonation: (donationData: any) => Promise<VarganiDonationItem>;
   addExpense: (expenseData: any) => Promise<ExpenseItem>;
   addDocument: (docData: any) => Promise<PermitDocumentItem>;
+  updateDocument: (id: string, docData: any) => Promise<PermitDocumentItem>;
+  deleteDocument: (id: string) => Promise<boolean>;
   updateDonationStatus: (id: string, status: DonationStatus) => Promise<void>;
   updateDonation: (id: string, donationData: any) => Promise<VarganiDonationItem>;
   deleteDonation: (id: string) => Promise<boolean>;
@@ -57,6 +59,8 @@ interface AppContextType {
   setDonationToEdit: (item: VarganiDonationItem | null) => void;
   expenseToEdit: ExpenseItem | null;
   setExpenseToEdit: (item: ExpenseItem | null) => void;
+  documentToEdit: PermitDocumentItem | null;
+  setDocumentToEdit: (item: PermitDocumentItem | null) => void;
 }
 
 const defaultStats: MandalStats = {
@@ -91,6 +95,7 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [selectedReceiptForShare, setSelectedReceiptForShare] = useState<VarganiDonationItem | null>(null);
   const [donationToEdit, setDonationToEdit] = useState<VarganiDonationItem | null>(null);
   const [expenseToEdit, setExpenseToEdit] = useState<ExpenseItem | null>(null);
+  const [documentToEdit, setDocumentToEdit] = useState<PermitDocumentItem | null>(null);
 
   const { data: session } = useSession();
 
@@ -199,6 +204,33 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     return created;
   };
 
+  const updateDocument = async (id: string, docData: any) => {
+    const res = await fetch(`/api/documents/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(docData),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'कागदपत्र अद्यतन करताना त्रुटी आली.');
+    }
+    const updated = await res.json();
+    await refresh();
+    return updated;
+  };
+
+  const deleteDocument = async (id: string) => {
+    const res = await fetch(`/api/documents/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'कागदपत्र हटवताना त्रुटी आली.');
+    }
+    await refresh();
+    return true;
+  };
+
   const updateDonationStatus = async (id: string, status: DonationStatus) => {
     const res = await fetch(`/api/donations/${id}`, {
       method: 'PATCH',
@@ -299,6 +331,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         setDonationToEdit,
         expenseToEdit,
         setExpenseToEdit,
+        documentToEdit,
+        setDocumentToEdit,
+        updateDocument,
+        deleteDocument,
       }}
     >
       {children}
