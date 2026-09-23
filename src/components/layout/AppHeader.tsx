@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import { AnimatedButton } from '@/components/ui/animated-button';
+import { RadialGlowButton } from '@/components/ui/radial-glow-button';
 
 const roleLabels: Record<UserRole, { title: string; icon: any; color: string }> = {
   ADMIN: { title: 'अध्यक्ष', icon: ShieldAlert, color: 'bg-red-50 text-red-700 border-red-200' },
@@ -111,14 +112,16 @@ export function AppHeader() {
         {/* Right: Controls (Quick Action, Role Switcher, Year, Language) */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {currentRole !== 'MEMBER' && (
-            <AnimatedButton
+            <RadialGlowButton
               type="button"
+              variant="saffron"
+              size="sm"
               onClick={() => setIsAddDonationOpen(true)}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white text-xs font-black shadow-sm active:scale-95 transition-all whitespace-nowrap cursor-pointer border border-saffron-400/40"
+              className="hidden md:flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-black shadow-md shadow-saffron-500/20"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
               <span className="whitespace-nowrap">{t('add_donation')}</span>
-            </AnimatedButton>
+            </RadialGlowButton>
           )}
           {/* Year Switcher */}
           <div className="relative">

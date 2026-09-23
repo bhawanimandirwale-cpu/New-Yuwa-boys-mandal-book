@@ -26,6 +26,7 @@ import {
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
 import { safeCopyToClipboard } from '@/lib/clipboard';
+import { RadialGlowButton } from '@/components/ui/radial-glow-button';
 
 const QUICK_AMOUNTS = [101, 251, 501, 1001, 2001, 5001];
 
@@ -661,10 +662,13 @@ ${receiptUrl}
 
               {/* Submit Button (Thumb Zone bottom trigger) */}
               <div className="pt-2">
-                <button
+                <RadialGlowButton
                   type="submit"
+                  variant="saffron"
+                  size="lg"
+                  fullWidth
                   disabled={submitting || numericAmount <= 0}
-                  className="w-full h-13 py-3.5 rounded-2xl bg-gradient-to-r from-saffron-600 via-amber-500 to-saffron-600 hover:from-saffron-700 hover:to-saffron-700 text-white font-black text-sm shadow-xl shadow-saffron-500/30 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 transition-all"
+                  className="w-full h-13 py-3.5 rounded-2xl text-white font-black text-sm shadow-xl shadow-saffron-500/30 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>
@@ -677,7 +681,7 @@ ${receiptUrl}
                       <span>₹ {toDevanagariDigits(numericAmount)} वर्गणी जमा करा व पावती बनवा</span>
                     </>
                   )}
-                </button>
+                </RadialGlowButton>
               </div>
             </form>
           )}

@@ -17,6 +17,7 @@ import {
   FileText,
   DollarSign
 } from 'lucide-react';
+import { RadialGlowButton } from '@/components/ui/radial-glow-button';
 
 const CATEGORIES: { key: ExpenseCategory; label: string; icon: string }[] = [
   { key: 'MANDAP', label: 'मंडप', icon: '⛺' },
@@ -391,10 +392,13 @@ export function AddExpenseDrawer() {
 
             {/* Submit Trigger (Bottom Thumb Zone) */}
             <div className="pt-2">
-              <button
+              <RadialGlowButton
                 type="submit"
+                variant="rose"
+                size="lg"
+                fullWidth
                 disabled={submitting || !amount}
-                className="w-full h-13 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-500 to-red-600 hover:from-red-700 hover:to-red-700 text-white font-black text-sm shadow-xl shadow-red-500/30 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 transition-all"
+                className="w-full h-13 py-3.5 rounded-2xl text-white font-black text-sm shadow-xl shadow-rose-600/30 flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>
@@ -407,7 +411,7 @@ export function AddExpenseDrawer() {
                     <span>खर्च व्हाऊचर जतन करा</span>
                   </>
                 )}
-              </button>
+              </RadialGlowButton>
             </div>
           </form>
         </div>

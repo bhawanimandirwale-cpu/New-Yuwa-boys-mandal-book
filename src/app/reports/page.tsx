@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   RotateCcw 
 } from 'lucide-react';
+import { RadialGlowButton } from '@/components/ui/radial-glow-button';
 
 export default function ReportsPage() {
   const { mandal, stats, donations, expenses, activeYear, currentRole, setIsResetAccountsOpen } = useApp();
@@ -94,13 +95,15 @@ export default function ReportsPage() {
             <span>खर्च Excel</span>
           </button>
 
-          <button
+          <RadialGlowButton
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white font-bold text-xs shadow-md shadow-saffron-500/20 active:scale-95 transition-all"
+            variant="saffron"
+            size="sm"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold shadow-md shadow-saffron-500/20"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>ताळेबंद प्रिंट / PDF</span>
-          </button>
+          </RadialGlowButton>
 
           {currentRole === 'ADMIN' && (
             <button
