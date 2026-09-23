@@ -3,6 +3,8 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { Mandal } from '@/models/Mandal';
 import { Expense } from '@/models/Expense';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

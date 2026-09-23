@@ -5,6 +5,8 @@ import { Donation } from '@/models/Donation';
 import { Expense } from '@/models/Expense';
 import { PermitDocument } from '@/models/Document';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     await connectToDatabase();

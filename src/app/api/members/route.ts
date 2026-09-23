@@ -6,6 +6,8 @@ import { MandalMember } from '@/models/MandalMember';
 import { Donation } from '@/models/Donation';
 import { resolveUnifiedUser } from '@/lib/userResolver';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     await connectToDatabase();

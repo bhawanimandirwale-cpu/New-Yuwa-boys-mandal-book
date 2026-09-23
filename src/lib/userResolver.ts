@@ -29,10 +29,109 @@ export function getClean10Digits(input?: string | null): string {
   return digits.length >= 10 ? digits.slice(-10) : digits;
 }
 
+export function maskEmail(email?: string | null): string {
+  if (!email || !email.includes('@')) return '';
+  const [local, domain] = email.split('@');
+  if (local.length <= 2) return `${local}***@${domain}`;
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
+export function maskPhone(phone?: string | null): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length >= 10) {
+    const last10 = digits.slice(-10);
+    return `+91 ${last10.slice(0, 4)}***${last10.slice(-3)}`;
+  }
+  return phone;
+}
+
+/**
+ * Checks whether a given mobile phone number is available or already owned by another user.
+ */
+export async function isPhoneAvailable(
+  phone: string,
+  excludeUserId?: string | mongoose.Types.ObjectId
+): Promise<{ available: boolean; ownerEmail?: string }> {
+  await connectToDatabase();
+  const clean10 = getClean10Digits(phone);
+  if (!clean10) return { available: false };
+
+  // Adhyaksh official numbers (7499085045, 9923092340) are strictly reserved
+  const isAdhyakshNumber = clean10 === '7499085045' || clean10 === '9923092340';
+  if (isAdhyakshNumber) {
+    const adhyaksh = await User.findOne({ email: 'bhawanimandirwale@gmail.com' });
+    if (!excludeUserId || (adhyaksh && excludeUserId.toString() !== adhyaksh._id.toString())) {
+      return {
+        available: false,
+        ownerEmail: maskEmail('bhawanimandirwale@gmail.com'),
+      };
+    }
+  }
+
+  const query: any = {
+    $or: [
+      { phone: clean10 },
+      { phone: `+91${clean10}` },
+      { phone: `91${clean10}` },
+    ],
+  };
+
+  if (excludeUserId && mongoose.Types.ObjectId.isValid(excludeUserId.toString())) {
+    query._id = { $ne: new mongoose.Types.ObjectId(excludeUserId.toString()) };
+  }
+
+  const existing = await User.findOne(query);
+  if (existing) {
+    return {
+      available: false,
+      ownerEmail: existing.email ? maskEmail(existing.email) : undefined,
+    };
+  }
+  return { available: true };
+}
+
+/**
+ * Checks whether a given email address is available or already owned by another user.
+ */
+export async function isEmailAvailable(
+  email: string,
+  excludeUserId?: string | mongoose.Types.ObjectId
+): Promise<{ available: boolean; ownerPhone?: string }> {
+  await connectToDatabase();
+  const normalized = email.toLowerCase().trim();
+  if (!normalized) return { available: false };
+
+  // Adhyaksh official email is strictly reserved
+  if (normalized === 'bhawanimandirwale@gmail.com') {
+    const adhyaksh = await User.findOne({ email: 'bhawanimandirwale@gmail.com' });
+    if (!excludeUserId || (adhyaksh && excludeUserId.toString() !== adhyaksh._id.toString())) {
+      return {
+        available: false,
+        ownerPhone: maskPhone('+917499085045'),
+      };
+    }
+  }
+
+  const query: any = { email: normalized };
+  if (excludeUserId && mongoose.Types.ObjectId.isValid(excludeUserId.toString())) {
+    query._id = { $ne: new mongoose.Types.ObjectId(excludeUserId.toString()) };
+  }
+
+  const existing = await User.findOne(query);
+  if (existing) {
+    return {
+      available: false,
+      ownerPhone: existing.phone ? maskPhone(existing.phone) : undefined,
+    };
+  }
+  return { available: true };
+}
+
 /**
  * Universal Account Resolution & Unification Engine
  * Integrates Phone number and Email together into a SINGLE unified user document in MongoDB.
- * Completely eliminates duplicate accounts across Google OAuth, Phone SMS OTP, and Email OTP login methods.
+ * Enforces strict 1:1 unique mapping (1 Phone = 1 Email). No sharing across different accounts.
  */
 export async function resolveUnifiedUser({
   id,
@@ -124,32 +223,79 @@ export async function resolveUnifiedUser({
       if (candidates.length === 1) {
         user = candidates[0];
       } else if (candidates.length > 1) {
-        // Multi-Account Collision: Merge multiple profiles (e.g. one had email, one had phone) into canonical
-        const primary = candidates[0];
-        const duplicates = candidates.slice(1);
+        // Check if collision between two DIFFERENT users with both phone and email
+        const userWithEmail = candidates.find((c) => c.email === normalizedEmail);
+        const userWithPhone = candidates.find(
+          (c) => c.phone && getClean10Digits(c.phone) === clean10
+        );
 
-        for (const dup of duplicates) {
-          // Inherit fields if primary lacks them
-          if (!primary.email && dup.email) primary.email = dup.email;
-          if (!primary.phone && dup.phone) primary.phone = dup.phone;
-          if ((!primary.name || primary.name === 'मंडळ कार्यकर्ता') && dup.name) primary.name = dup.name;
-          if (!primary.avatarUrl && dup.avatarUrl) primary.avatarUrl = dup.avatarUrl;
+        if (
+          userWithEmail &&
+          userWithPhone &&
+          userWithEmail._id.toString() !== userWithPhone._id.toString()
+        ) {
+          // If both users already have their own distinct identities, do NOT silently hijack!
+          if (userWithPhone.email && userWithPhone.email !== normalizedEmail) {
+            throw new Error(
+              `हा मोबाईल नंबर (+91 ${clean10}) आधीच दुसऱ्या खात्याशी (${maskEmail(
+                userWithPhone.email
+              )}) जोडलेला आहे. कृपया आपला नवीन नंबर वापरा.`
+            );
+          }
+          if (userWithEmail.phone && getClean10Digits(userWithEmail.phone) !== clean10) {
+            throw new Error(
+              `हा ईमेल (${normalizedEmail}) आधीच दुसऱ्या मोबाईल नंबरशी जोडलेला आहे.`
+            );
+          }
 
-          // Migrate references to primary
-          await Donation.updateMany({ collectorId: dup._id }, { $set: { collectorId: primary._id } });
-          await Expense.updateMany({ paidByMemberId: dup._id }, { $set: { paidByMemberId: primary._id } });
-          await MandalMember.deleteMany({ userId: dup._id });
-          await User.deleteOne({ _id: dup._id });
+          // Otherwise merge incomplete profile
+          const primary = userWithEmail;
+          const duplicate = userWithPhone;
+
+          if (!primary.phone && duplicate.phone) primary.phone = duplicate.phone;
+          if ((!primary.name || primary.name === 'मंडळ कार्यकर्ता') && duplicate.name) {
+            primary.name = duplicate.name;
+          }
+          if (!primary.avatarUrl && duplicate.avatarUrl) primary.avatarUrl = duplicate.avatarUrl;
+
+          await Donation.updateMany({ collectorId: duplicate._id }, { $set: { collectorId: primary._id } });
+          await Expense.updateMany({ paidByMemberId: duplicate._id }, { $set: { paidByMemberId: primary._id } });
+          await MandalMember.deleteMany({ userId: duplicate._id });
+          await User.deleteOne({ _id: duplicate._id });
+
+          user = primary;
+        } else {
+          user = candidates[0];
         }
-
-        user = primary;
       }
     }
 
     if (!user) {
-      // Create fresh unified user
+      // Check availability before creating new user
+      if (formattedPhone) {
+        const phoneCheck = await isPhoneAvailable(formattedPhone);
+        if (!phoneCheck.available) {
+          throw new Error(
+            `हा मोबाईल नंबर (+91 ${clean10}) आधीच दुसऱ्या खात्याशी जोडलेला आहे.`
+          );
+        }
+      }
+      if (normalizedEmail) {
+        const emailCheck = await isEmailAvailable(normalizedEmail);
+        if (!emailCheck.available) {
+          throw new Error(`हा ईमेल (${normalizedEmail}) आधीच दुसऱ्या खात्याशी जोडलेला आहे.`);
+        }
+      }
+
+      // Create fresh user
       user = await User.create({
-        name: name?.trim() || (normalizedEmail ? normalizedEmail.split('@')[0] : (clean10 ? `कार्यकर्ता (${clean10.slice(-4)})` : 'मंडळ कार्यकर्ता')),
+        name:
+          name?.trim() ||
+          (normalizedEmail
+            ? normalizedEmail.split('@')[0]
+            : clean10
+            ? `कार्यकर्ता (${clean10.slice(-4)})`
+            : 'मंडळ कार्यकर्ता'),
         email: normalizedEmail || undefined,
         phone: formattedPhone || undefined,
         role: 'USER',
@@ -157,18 +303,36 @@ export async function resolveUnifiedUser({
       });
     } else {
       let updated = false;
+
       // Link email if user document did not have it
       if (normalizedEmail && (!user.email || user.email === '')) {
+        const emailCheck = await isEmailAvailable(normalizedEmail, user._id);
+        if (!emailCheck.available) {
+          throw new Error(
+            `हा ईमेल (${normalizedEmail}) आधीच दुसऱ्या खात्याशी जोडलेला आहे. कृपया स्वतःचा वेगळा ईमेल वापरा.`
+          );
+        }
         user.email = normalizedEmail;
         updated = true;
       }
+
       // Link phone if user document did not have it
       if (formattedPhone && (!user.phone || user.phone === '')) {
+        const phoneCheck = await isPhoneAvailable(formattedPhone, user._id);
+        if (!phoneCheck.available) {
+          throw new Error(
+            `हा मोबाईल नंबर (+91 ${clean10}) आधीच दुसऱ्या खात्याशी जोडलेला आहे. कृपया आपला नवीन नंबर वापरा.`
+          );
+        }
         user.phone = formattedPhone;
         updated = true;
       }
+
       // Set friendly name if unset or default
-      if (name?.trim() && (!user.name || user.name === 'मंडळ कार्यकर्ता' || user.name.startsWith('कार्यकर्ता'))) {
+      if (
+        name?.trim() &&
+        (!user.name || user.name === 'मंडळ कार्यकर्ता' || user.name.startsWith('कार्यकर्ता'))
+      ) {
         user.name = name.trim();
         updated = true;
       }

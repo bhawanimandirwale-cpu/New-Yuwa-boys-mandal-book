@@ -4,6 +4,8 @@ import { Mandal } from '@/models/Mandal';
 import { Donation } from '@/models/Donation';
 import { numberToWordsMarathi } from '@/lib/numberToWordsMarathi';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

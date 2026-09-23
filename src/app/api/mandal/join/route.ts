@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     const cleanPhone = phone?.trim() || (token as any)?.phone;
 
     const { user } = await resolveUnifiedUser({
+      id: token?.id as string,
       name: name?.trim() || token?.name,
       email: targetEmail || undefined,
       phone: cleanPhone || undefined,

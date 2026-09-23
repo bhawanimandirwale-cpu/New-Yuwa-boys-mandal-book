@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import OtpToken from '@/models/OtpToken';
 import { sendOtpDevSms } from '@/lib/otpdev';
+import { isPhoneAvailable } from '@/lib/userResolver';
+import { getToken } from 'next-auth/jwt';
 
 export async function POST(req: Request) {
   try {
-    const { phone } = await req.json();
+    const { phone, checkAvailable } = await req.json();
     if (!phone || phone.replace(/[^0-9]/g, '').length < 10) {
       return NextResponse.json(
         { error: 'कृपया योग्य १० अंकी मोबाईल नंबर टाका' },
@@ -14,6 +16,19 @@ export async function POST(req: Request) {
     }
 
     const cleanPhone = phone.replace(/[^0-9]/g, '').slice(-10);
+
+    // If checkAvailable is requested, ensure phone is not already owned by another account
+    if (checkAvailable) {
+      const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';
+      const token = await getToken({ req: req as any, secret });
+      const avail = await isPhoneAvailable(cleanPhone, token?.id as string);
+      if (!avail.available) {
+        return NextResponse.json(
+          { error: `हा मोबाईल नंबर (+91 ${cleanPhone}) आधीच दुसऱ्या खात्याशी जोडलेला आहे. कृपया आपला नवीन नंबर वापरा.` },
+          { status: 409 }
+        );
+      }
+    }
 
     // 1. Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

@@ -23,25 +23,51 @@ export async function middleware(req: NextRequest) {
   if (
     pathname === '/login' ||
     pathname.startsWith('/receipt') ||
-    pathname.startsWith('/join')
+    pathname.startsWith('/join') ||
+    pathname.startsWith('/onboarding')
   ) {
     const token = await getToken({ req, secret });
+    const normalizedEmail = token?.email?.toLowerCase().trim();
+    const rawPhone = token?.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
+    const isAdmin =
+      normalizedEmail === 'bhawanimandirwale@gmail.com' ||
+      rawPhone === '7499085045' ||
+      rawPhone === '9923092340' ||
+      token?.role === 'SUPER_ADMIN' ||
+      token?.role === 'ADMIN';
+
     // If authenticated user visits /login
     if (token && pathname === '/login') {
-      const normalizedEmail = token?.email?.toLowerCase().trim();
-      const rawPhone = token?.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
-      const isAdmin =
-        normalizedEmail === 'bhawanimandirwale@gmail.com' ||
-        rawPhone === '7499085045' ||
-        rawPhone === '9923092340' ||
-        token?.role === 'ADMIN';
+      const hasBothCredentials = Boolean(rawPhone && normalizedEmail);
       const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
-      if (isAdmin || isActiveMember) {
+
+      if (isAdmin) {
+        return NextResponse.redirect(new URL('/', req.url));
+      } else if (!hasBothCredentials) {
+        return NextResponse.redirect(new URL('/onboarding', req.url));
+      } else if (isActiveMember) {
         return NextResponse.redirect(new URL('/', req.url));
       } else {
         return NextResponse.redirect(new URL('/join?pending=true', req.url));
       }
     }
+
+    // If Adhyaksh or fully verified active user visits /onboarding, redirect to /
+    if (token && pathname === '/onboarding') {
+      const hasBothCredentials = Boolean(rawPhone && normalizedEmail);
+      if (isAdmin) {
+        return NextResponse.redirect(new URL('/', req.url));
+      }
+      if (hasBothCredentials) {
+        const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
+        if (isActiveMember) {
+          return NextResponse.redirect(new URL('/', req.url));
+        } else {
+          return NextResponse.redirect(new URL('/join?pending=true', req.url));
+        }
+      }
+    }
+
     return NextResponse.next();
   }
 
@@ -65,7 +91,6 @@ export async function middleware(req: NextRequest) {
 
   // 5. If not authenticated, redirect to /login with callbackUrl
   if (!isAuthenticated) {
-    // For protected API endpoints, return 401 JSON
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized. Please login.' }, { status: 401 });
     }
@@ -75,21 +100,38 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 6. Strict Mandal Admission Gate:
-  // Must be Adhyaksh (bhawanimandirwale@gmail.com / ADMIN) OR have Adhyaksh approval / valid Mandal Code
+  // 6. Adhyaksh Check:
   const normalizedEmail = token?.email?.toLowerCase().trim();
   const rawPhone = token?.phone ? (token.phone as string).replace(/\D/g, '').slice(-10) : '';
   const isAdmin =
     normalizedEmail === 'bhawanimandirwale@gmail.com' ||
     rawPhone === '7499085045' ||
     rawPhone === '9923092340' ||
+    token?.role === 'SUPER_ADMIN' ||
     token?.role === 'ADMIN';
-  const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
 
-  if (!isAdmin && !isActiveMember) {
+  if (isAdmin) {
+    return NextResponse.next();
+  }
+
+  // 7. Mandatory 1:1 Credentials Check (Must have BOTH verified Phone and Email):
+  const hasBothCredentials = Boolean(rawPhone && normalizedEmail);
+  if (!hasBothCredentials) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json(
-        { error: 'मंडळात प्रवेश नाकारला: मंडळात प्रवेश करण्यासाठी अधिकृत मंडळ कोड किंवा अध्यक्षांची मंजुरी आवश्यक आहे.' },
+        { error: 'खाते अपूर्ण आहे: कृपया मोबाईल नंबर व ईमेल दोन्ही सत्यापित करा.' },
+        { status: 403 }
+      );
+    }
+    return NextResponse.redirect(new URL('/onboarding', req.url));
+  }
+
+  // 8. Strict Mandal Admission Gate:
+  const isActiveMember = token?.status === 'ACTIVE' && token?.role !== 'PENDING';
+  if (!isActiveMember) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'मंडळात प्रवेश नाकारला: अधिकृत मंडळ कोड किंवा अध्यक्षांची मंजुरी आवश्यक आहे.' },
         { status: 403 }
       );
     }

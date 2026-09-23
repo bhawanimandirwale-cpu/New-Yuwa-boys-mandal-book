@@ -13,8 +13,8 @@ export interface IUser extends Document {
 const UserSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, default: 'मंडळ कार्यकर्ता', trim: true },
-    phone: { type: String, sparse: true, index: true, trim: true },
-    email: { type: String, sparse: true, index: true, lowercase: true, trim: true },
+    phone: { type: String, unique: true, sparse: true, index: true, trim: true },
+    email: { type: String, unique: true, sparse: true, index: true, lowercase: true, trim: true },
     avatarUrl: { type: String, default: '' },
     role: { type: String, enum: ['SUPER_ADMIN', 'USER'], default: 'USER' },
     activeMandalId: { type: Schema.Types.ObjectId, ref: 'Mandal' },
