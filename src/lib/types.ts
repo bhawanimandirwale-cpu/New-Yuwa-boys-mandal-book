@@ -74,6 +74,7 @@ export interface ExpenseItem {
   amount: number;
   paidTo: string;
   paidBy: string;
+  paymentMode?: PaymentMode;
   billUrl?: string;
   voucherNo: string;
   year: number;

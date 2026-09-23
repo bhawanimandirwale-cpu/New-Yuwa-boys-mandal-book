@@ -3,6 +3,8 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { MandalMember } from '@/models/MandalMember';
 import { getToken } from 'next-auth/jwt';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useApp } from '@/lib/context/AppContext';
+import { useI18n } from '@/lib/i18n/context';
 import { toDevanagariDigits } from '@/lib/formatters';
 import { 
   Bell, 
@@ -15,14 +16,18 @@ import {
   X,
   Calendar,
   CheckCircle2,
-  RotateCcw
+  RotateCcw,
+  Globe,
+  Check
 } from 'lucide-react';
 
 export function MobileTopBar() {
   const { mandal, activeYear, setYear, currentRole, setIsResetAccountsOpen, setIsAccountProfileOpen } = useApp();
+  const { language, setLanguage } = useI18n();
   const { data: session } = useSession();
 
   const [yearOpen, setYearOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
 
@@ -51,11 +56,82 @@ export function MobileTopBar() {
           </div>
         </Link>
 
-        {/* Center: Festival Year Selector Pill (२०२६ ▼) */}
-        <div className="relative shrink-0 mr-2">
+        {/* Center: Language Switcher Pill */}
+        <div className="relative shrink-0 mr-1.5">
           <button
             type="button"
-            onClick={() => setYearOpen(!yearOpen)}
+            onClick={() => {
+              setLangOpen(!langOpen);
+              setYearOpen(false);
+              setProfileOpen(false);
+              setNotificationOpen(false);
+            }}
+            className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-50/80 border border-saffron-200 text-saffron-800 font-extrabold text-[11px] shadow-2xs active:scale-95 transition-all"
+            title="भाषा बदला / Change Language"
+          >
+            <Globe className="w-3 h-3 text-saffron-600" />
+            <span>{language === 'mr' ? 'मराठी' : language === 'hi' ? 'हिंदी' : 'EN'}</span>
+            <ChevronDown className="w-2.5 h-2.5 text-saffron-600" />
+          </button>
+
+          {langOpen && (
+            <div className="absolute top-full mt-1.5 right-0 w-32 bg-white rounded-2xl shadow-2xl border border-gray-200 py-1 z-50 animate-in fade-in zoom-in-95">
+              <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                भाषा निवडा
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('mr');
+                  setLangOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-xs font-bold transition-colors flex items-center justify-between ${
+                  language === 'mr' ? 'bg-saffron-50 text-saffron-700' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>मराठी (MR)</span>
+                {language === 'mr' && <Check className="w-3 h-3 text-saffron-600" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('hi');
+                  setLangOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-xs font-bold transition-colors flex items-center justify-between ${
+                  language === 'hi' ? 'bg-saffron-50 text-saffron-700' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>हिंदी (HI)</span>
+                {language === 'hi' && <Check className="w-3 h-3 text-saffron-600" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('en');
+                  setLangOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-xs font-bold transition-colors flex items-center justify-between ${
+                  language === 'en' ? 'bg-saffron-50 text-saffron-700' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>English (EN)</span>
+                {language === 'en' && <Check className="w-3 h-3 text-saffron-600" />}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Center: Festival Year Selector Pill (२०२६ ▼) */}
+        <div className="relative shrink-0 mr-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              setYearOpen(!yearOpen);
+              setLangOpen(false);
+              setProfileOpen(false);
+              setNotificationOpen(false);
+            }}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-saffron-50 border border-saffron-200 text-saffron-800 font-extrabold text-xs shadow-xs active:scale-95 transition-all"
           >
             <span>{toDevanagariDigits(activeYear)}</span>
@@ -172,6 +248,30 @@ export function MobileTopBar() {
                 <div className="pt-2 space-y-1.5">
                   <div className="px-2 py-0.5 text-[10px] text-gray-400 font-medium truncate">
                     {session?.user?.email || 'मंडळ युझर'}
+                  </div>
+
+                  {/* Language Selector in Profile */}
+                  <div className="p-2 bg-gray-50 rounded-xl border border-gray-200/70">
+                    <div className="text-[10px] font-bold text-gray-500 mb-1 flex items-center gap-1">
+                      <Globe className="w-3 h-3 text-saffron-600" />
+                      <span>भाषा निवडा (Language)</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1">
+                      {(['mr', 'hi', 'en'] as const).map((l) => (
+                        <button
+                          key={l}
+                          type="button"
+                          onClick={() => setLanguage(l)}
+                          className={`py-1 text-center rounded-lg text-xs font-extrabold transition-all ${
+                            language === l
+                              ? 'bg-saffron-600 text-white shadow-xs'
+                              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {l === 'mr' ? 'मराठी' : l === 'hi' ? 'हिंदी' : 'EN'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Open Account Details Modal */}

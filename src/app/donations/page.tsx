@@ -15,7 +15,8 @@ import {
   Clock, 
   Phone, 
   MapPin, 
-  UserCheck 
+  UserCheck,
+  Edit3
 } from 'lucide-react';
 
 export default function DonationsPage() {
@@ -23,7 +24,8 @@ export default function DonationsPage() {
     donations, 
     setIsAddDonationOpen, 
     setSelectedReceiptForShare, 
-    updateDonationStatus, 
+    updateDonationStatus,
+    setDonationToEdit,
     stats,
     currentRole 
   } = useApp();
@@ -254,6 +256,18 @@ export default function DonationsPage() {
                       <Share2 className="w-3.5 h-3.5" />
                       <span>पावती / WhatsApp</span>
                     </button>
+
+                    {/* Edit Donation Button */}
+                    {!isPublicMember && (
+                      <button
+                        onClick={() => setDonationToEdit(item)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs transition-colors"
+                        title="पावती संपादित करा"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>संपादित करा</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

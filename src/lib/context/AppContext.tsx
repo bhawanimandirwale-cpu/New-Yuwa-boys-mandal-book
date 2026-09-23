@@ -39,6 +39,10 @@ interface AppContextType {
   addExpense: (expenseData: any) => Promise<ExpenseItem>;
   addDocument: (docData: any) => Promise<PermitDocumentItem>;
   updateDonationStatus: (id: string, status: DonationStatus) => Promise<void>;
+  updateDonation: (id: string, donationData: any) => Promise<VarganiDonationItem>;
+  deleteDonation: (id: string) => Promise<boolean>;
+  updateExpense: (id: string, expenseData: any) => Promise<ExpenseItem>;
+  deleteExpense: (id: string) => Promise<boolean>;
   isAddDonationOpen: boolean;
   setIsAddDonationOpen: (open: boolean) => void;
   isAddExpenseOpen: boolean;
@@ -49,6 +53,10 @@ interface AppContextType {
   setIsAccountProfileOpen: (open: boolean) => void;
   selectedReceiptForShare: VarganiDonationItem | null;
   setSelectedReceiptForShare: (item: VarganiDonationItem | null) => void;
+  donationToEdit: VarganiDonationItem | null;
+  setDonationToEdit: (item: VarganiDonationItem | null) => void;
+  expenseToEdit: ExpenseItem | null;
+  setExpenseToEdit: (item: ExpenseItem | null) => void;
 }
 
 const defaultStats: MandalStats = {
@@ -81,6 +89,8 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
   const [isResetAccountsOpen, setIsResetAccountsOpen] = useState(false);
   const [isAccountProfileOpen, setIsAccountProfileOpen] = useState(false);
   const [selectedReceiptForShare, setSelectedReceiptForShare] = useState<VarganiDonationItem | null>(null);
+  const [donationToEdit, setDonationToEdit] = useState<VarganiDonationItem | null>(null);
+  const [expenseToEdit, setExpenseToEdit] = useState<ExpenseItem | null>(null);
 
   const { data: session } = useSession();
 
@@ -199,6 +209,60 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
     await refresh();
   };
 
+  const updateDonation = async (id: string, donationData: any) => {
+    const res = await fetch(`/api/donations/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(donationData),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'वर्गणी अद्यतन करताना त्रुटी आली.');
+    }
+    const updated = await res.json();
+    await refresh();
+    return updated;
+  };
+
+  const deleteDonation = async (id: string) => {
+    const res = await fetch(`/api/donations/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'वर्गणी हटवताना त्रुटी आली.');
+    }
+    await refresh();
+    return true;
+  };
+
+  const updateExpense = async (id: string, expenseData: any) => {
+    const res = await fetch(`/api/expenses/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(expenseData),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'खर्च अद्यतन करताना त्रुटी आली.');
+    }
+    const updated = await res.json();
+    await refresh();
+    return updated;
+  };
+
+  const deleteExpense = async (id: string) => {
+    const res = await fetch(`/api/expenses/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'खर्च हटवताना त्रुटी आली.');
+    }
+    await refresh();
+    return true;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -217,6 +281,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         addExpense,
         addDocument,
         updateDonationStatus,
+        updateDonation,
+        deleteDonation,
+        updateExpense,
+        deleteExpense,
         isAddDonationOpen,
         setIsAddDonationOpen,
         isAddExpenseOpen,
@@ -227,6 +295,10 @@ export function AppContextProvider({ children }: { children: React.ReactNode }) 
         setIsAccountProfileOpen,
         selectedReceiptForShare,
         setSelectedReceiptForShare,
+        donationToEdit,
+        setDonationToEdit,
+        expenseToEdit,
+        setExpenseToEdit,
       }}
     >
       {children}

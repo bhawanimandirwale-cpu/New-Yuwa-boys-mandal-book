@@ -7,6 +7,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { MobileTopBar } from '@/components/layout/MobileShell';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { MobileFloatingActions } from '@/components/layout/MobileFloatingActions';
 import { GlobalModals } from '@/components/layout/GlobalModals';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 
@@ -76,9 +77,10 @@ export default function RootLayout({
                 <div className="sm:hidden">
                   <MobileTopBar />
                 </div>
-                <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-6 pb-28 sm:pb-12">
+                <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-3 sm:py-6 pb-36 sm:pb-12">
                   {children}
                 </main>
+                <MobileFloatingActions />
                 <BottomNav />
                 <GlobalModals />
                 <ServiceWorkerRegister />

@@ -18,8 +18,10 @@ import {
   Sparkles,
   Smartphone,
   Copy,
-  Check
+  Check,
+  Globe
 } from 'lucide-react';
+import { useI18n } from '@/lib/i18n/context';
 
 export function AccountProfileModal() {
   const {
@@ -29,6 +31,7 @@ export function AccountProfileModal() {
     mandal,
     setIsResetAccountsOpen,
   } = useApp();
+  const { language, setLanguage } = useI18n();
   const { data: session } = useSession();
 
   const [dbUser, setDbUser] = useState<any>(null);
@@ -234,6 +237,38 @@ export function AccountProfileModal() {
                 {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedCode ? 'कॉपी झाले!' : 'कॉपी करा'}</span>
               </button>
+            </div>
+          </div>
+
+          {/* Card: Language Selection */}
+          <div className="bg-gray-50 rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-2 text-xs">
+            <div className="text-xs font-black text-gray-900 font-heading flex items-center justify-between pb-2 border-b border-gray-200">
+              <div className="flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-saffron-600" />
+                <span>अ‍ॅपची भाषा (App Language)</span>
+              </div>
+              <span className="text-[10px] text-gray-500 font-medium">निवडलेली: {language === 'mr' ? 'मराठी' : language === 'hi' ? 'हिंदी' : 'English'}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              {[
+                { code: 'mr' as const, label: 'मराठी', sub: 'Marathi' },
+                { code: 'hi' as const, label: 'हिंदी', sub: 'Hindi' },
+                { code: 'en' as const, label: 'English', sub: 'इंग्रजी' },
+              ].map((lang) => (
+                <button
+                  key={lang.code}
+                  type="button"
+                  onClick={() => setLanguage(lang.code)}
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                    language === lang.code
+                      ? 'bg-gradient-to-r from-saffron-50 to-amber-50 border-saffron-500 text-saffron-800 shadow-xs ring-2 ring-saffron-400/30'
+                      : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="text-sm font-black">{lang.label}</span>
+                  <span className="text-[10px] text-gray-500 font-normal">{lang.sub}</span>
+                </button>
+              ))}
             </div>
           </div>
 

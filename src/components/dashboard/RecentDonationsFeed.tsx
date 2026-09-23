@@ -11,12 +11,13 @@ import {
   CheckCircle2, 
   Clock, 
   ChevronRight, 
-  ArrowUpRight 
+  ArrowUpRight,
+  Edit3
 } from 'lucide-react';
 import Link from 'next/link';
 
 export function RecentDonationsFeed() {
-  const { donations, setSelectedReceiptForShare } = useApp();
+  const { donations, setSelectedReceiptForShare, setDonationToEdit } = useApp();
   const { t, isMarathi } = useI18n();
 
   // Show recent 6 donations
@@ -109,6 +110,14 @@ export function RecentDonationsFeed() {
                   title="पावती पहा व व्हॉट्सॲपवर पाठवा"
                 >
                   <Share2 className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => setDonationToEdit(item)}
+                  className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors"
+                  title="पावती संपादित करा"
+                >
+                  <Edit3 className="w-4 h-4" />
                 </button>
               </div>
             </div>

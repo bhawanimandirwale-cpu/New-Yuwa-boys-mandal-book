@@ -7,6 +7,8 @@ import { ReceiptShareModal } from '@/components/receipts/ReceiptShareModal';
 import { InstallPromptModal } from '@/components/pwa/InstallPromptModal';
 import { ResetAccountsModal } from '@/components/modals/ResetAccountsModal';
 import { AccountProfileModal } from '@/components/modals/AccountProfileModal';
+import { EditDonationModal } from '@/components/modals/EditDonationModal';
+import { EditExpenseModal } from '@/components/modals/EditExpenseModal';
 
 export function GlobalModals() {
   return (
@@ -17,6 +19,8 @@ export function GlobalModals() {
       <InstallPromptModal />
       <ResetAccountsModal />
       <AccountProfileModal />
+      <EditDonationModal />
+      <EditExpenseModal />
     </>
   );
 }

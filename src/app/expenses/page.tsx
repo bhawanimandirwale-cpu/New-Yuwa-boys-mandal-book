@@ -17,7 +17,8 @@ import {
   CheckCircle, 
   Clock, 
   ExternalLink,
-  X 
+  X,
+  Edit3
 } from 'lucide-react';
 
 const CATEGORIES: { key: string; label: string }[] = [
@@ -35,7 +36,8 @@ const CATEGORIES: { key: string; label: string }[] = [
 export default function ExpensesPage() {
   const { 
     expenses, 
-    setIsAddExpenseOpen, 
+    setIsAddExpenseOpen,
+    setExpenseToEdit,
     stats, 
     currentRole 
   } = useApp();
@@ -177,6 +179,17 @@ export default function ExpensesPage() {
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-rose-600" />
                       <span>बिल पहा</span>
+                    </button>
+                  )}
+
+                  {!isPublicMember && (
+                    <button
+                      onClick={() => setExpenseToEdit(item)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 font-bold text-xs transition-colors"
+                      title="खर्च व्हाऊचर संपादित करा"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>संपादित करा</span>
                     </button>
                   )}
                 </div>

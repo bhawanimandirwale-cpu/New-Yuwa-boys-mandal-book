@@ -4,6 +4,8 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { resolveUnifiedUser } from '@/lib/userResolver';
 import { Mandal } from '@/models/Mandal';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const secret = process.env.NEXTAUTH_SECRET || 'mandalbook_secret_key_2026_super_secure_production_token';

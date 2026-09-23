@@ -74,7 +74,7 @@ export async function middleware(req: NextRequest) {
   // 3. Whitelist public API endpoints
   if (
     pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/api/donations/') ||
+    (pathname.startsWith('/api/donations/') && req.method === 'GET') ||
     pathname === '/api/mandal' ||
     pathname === '/api/mandal/join'
   ) {
