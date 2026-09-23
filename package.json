@@ -16,6 +16,7 @@
     "cloudinary": "^2.11.0",
     "clsx": "^2.1.1",
     "firebase": "^12.19.0",
+    "framer-motion": "^13.4.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "lucide-react": "^1.16.0",

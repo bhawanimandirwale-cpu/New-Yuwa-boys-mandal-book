@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { safeCopyToClipboard } from '@/lib/clipboard';
+import { AnimatedButton } from '@/components/ui/animated-button';
 
 export function QuickActions() {
   const { 
@@ -110,23 +111,25 @@ ${typeof window !== 'undefined' ? window.location.origin : 'https://mandalbook.c
       {/* Grid of Action Buttons */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {!isPublicMember && (
-          <button
+          <AnimatedButton
+            type="button"
             onClick={() => setIsAddDonationOpen(true)}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white font-bold text-xs shadow-md shadow-saffron-500/20 active:scale-95 transition-all"
+            className="w-full py-3 px-3 rounded-2xl bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white font-black text-xs shadow-md shadow-saffron-500/25 active:scale-95 transition-all cursor-pointer border border-saffron-400/40"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>＋ जमा नोंदवा</span>
-          </button>
+          </AnimatedButton>
         )}
 
         {!isPublicMember && (
-          <button
+          <AnimatedButton
+            type="button"
             onClick={() => setIsAddExpenseOpen(true)}
-            className="flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 active:scale-95 transition-all"
+            className="w-full py-3 px-3 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs shadow-md shadow-rose-600/25 active:scale-95 transition-all cursor-pointer border border-rose-400/40"
           >
             <Minus className="w-4 h-4 stroke-[3]" />
             <span>－ खर्च व्हाऊचर</span>
-          </button>
+          </AnimatedButton>
         )}
 
         <Link

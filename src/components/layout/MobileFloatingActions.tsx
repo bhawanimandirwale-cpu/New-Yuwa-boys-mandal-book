@@ -3,6 +3,7 @@
 import React from 'react';
 import { useApp } from '@/lib/context/AppContext';
 import { Plus, Minus } from 'lucide-react';
+import { AnimatedButton } from '@/components/ui/animated-button';
 
 export function MobileFloatingActions() {
   const { setIsAddDonationOpen, setIsAddExpenseOpen, currentRole } = useApp();
@@ -27,37 +28,37 @@ export function MobileFloatingActions() {
         marginBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
-      {/* 1. ＋ जमा नोंदवा (Floating Donation Button) */}
-      <button
+      {/* 1. ＋ जमा नोंदवा (Animated Floating Donation Button) */}
+      <AnimatedButton
         type="button"
         onClick={() => {
           triggerHaptic(35);
           setIsAddDonationOpen(true);
         }}
-        className="group flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-gradient-to-r from-saffron-600 via-amber-500 to-saffron-500 text-white font-black text-xs shadow-lg shadow-saffron-500/40 border-2 border-white active:scale-95 hover:shadow-xl transition-all whitespace-nowrap cursor-pointer"
+        className="px-4 py-2.5 rounded-full bg-gradient-to-r from-saffron-600 via-amber-500 to-saffron-500 text-white font-black text-xs shadow-xl shadow-saffron-500/40 border-2 border-white/90 active:scale-95 transition-all whitespace-nowrap cursor-pointer hover:shadow-2xl"
         title="वर्गणी जमा नोंदवा"
       >
         <div className="w-5 h-5 rounded-full bg-white/25 flex items-center justify-center shrink-0">
           <Plus className="w-3.5 h-3.5 stroke-[3.5]" />
         </div>
-        <span className="tracking-tight font-heading">＋ जमा नोंदवा</span>
-      </button>
+        <span className="tracking-tight font-heading font-black">＋ जमा नोंदवा</span>
+      </AnimatedButton>
 
-      {/* 2. － खर्च व्हाऊचर (Floating Expense Button) */}
-      <button
+      {/* 2. － खर्च व्हाऊचर (Animated Floating Expense Button) */}
+      <AnimatedButton
         type="button"
         onClick={() => {
           triggerHaptic(25);
           setIsAddExpenseOpen(true);
         }}
-        className="group flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-gradient-to-r from-rose-600 via-rose-500 to-red-600 text-white font-black text-xs shadow-lg shadow-rose-600/40 border-2 border-white active:scale-95 hover:shadow-xl transition-all whitespace-nowrap cursor-pointer"
+        className="px-4 py-2.5 rounded-full bg-gradient-to-r from-rose-600 via-rose-500 to-red-600 text-white font-black text-xs shadow-xl shadow-rose-600/40 border-2 border-white/90 active:scale-95 transition-all whitespace-nowrap cursor-pointer hover:shadow-2xl"
         title="खर्च व्हाऊचर नोंदवा"
       >
         <div className="w-5 h-5 rounded-full bg-white/25 flex items-center justify-center shrink-0">
           <Minus className="w-3.5 h-3.5 stroke-[3.5]" />
         </div>
-        <span className="tracking-tight font-heading">－ खर्च व्हाऊचर</span>
-      </button>
+        <span className="tracking-tight font-heading font-black">－ खर्च व्हाऊचर</span>
+      </AnimatedButton>
     </div>
   );
 }
