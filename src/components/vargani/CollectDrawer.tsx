@@ -247,7 +247,7 @@ export function CollectDrawer() {
 
 सप्रेम नमस्कार, *${createdDonation.donorName}* जी,
 
-*${mandalName}* (स्थापना: २०१२) सार्वजनिक गणेशोत्सवासाठी आपली *${formatCurrencyINR(createdDonation.amount, true)}* रुपयांची वर्गणी कृतज्ञतापूर्वक स्वीकारण्यात आली आहे.
+*${mandalName}* (स्थापना: ${mandal?.establishedYear ? toDevanagariDigits(mandal.establishedYear) : '१९९१'}) सार्वजनिक गणेशोत्सवासाठी आपली *${formatCurrencyINR(createdDonation.amount, true)}* रुपयांची वर्गणी कृतज्ञतापूर्वक स्वीकारण्यात आली आहे.
 
 📋 *अधिकृत डिजिटल पावती तपशील:*
 • पावती क्र: *${createdDonation.receiptNo}*

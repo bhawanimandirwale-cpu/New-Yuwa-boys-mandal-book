@@ -19,7 +19,7 @@ async function main() {
       name: 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.',
       tagline: 'न्यू युवा बॉईज - भव्य सार्वजनिक गणेशोत्सव २०२६',
       registrationNumber: 'नोंदणी क्र. महा/केऱ्हाळे/२०२६',
-      establishedYear: 2012,
+      establishedYear: 1991,
       address: 'मेन चौक, केऱ्हाळे बुद्रुक (Kerhale Bk.)',
       city: 'केऱ्हाळे बु.',
       upiId: 'newyuwaboys@upi',

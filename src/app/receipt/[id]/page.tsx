@@ -55,7 +55,7 @@ export default async function PublicReceiptPage({ params }: ReceiptPageProps) {
         name: mandal.name,
         tagline: mandal.tagline || 'न्यू युवा बॉईज - भव्य सार्वजनिक गणेशोत्सव २०२६',
         registrationNumber: mandal.registrationNo || 'महा/केऱ्हाळे/२०२६',
-        establishedYear: mandal.establishedYear || 2012,
+        establishedYear: mandal.establishedYear || 1991,
         address: mandal.address || 'मेन चौक, केऱ्हाळे बुद्रुक (Kerhale Bk.)',
         city: mandal.city || 'केऱ्हाळे बु.',
         logoUrl: mandal.logoUrl || undefined,

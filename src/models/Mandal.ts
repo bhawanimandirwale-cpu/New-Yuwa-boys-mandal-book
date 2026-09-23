@@ -30,7 +30,7 @@ const MandalSchema: Schema<IMandal> = new Schema(
     name: { type: String, required: true, trim: true },
     tagline: { type: String, default: 'न्यू युवा बॉईज - भव्य सार्वजनिक गणेशोत्सव २०२६' },
     registrationNo: { type: String, default: 'महा/केऱ्हाळे/२०२६' },
-    establishedYear: { type: Number, default: 2012 },
+    establishedYear: { type: Number, default: 1991 },
     address: { type: String, default: 'मेन चौक, केऱ्हाळे बुद्रुक (Kerhale Bk.)' },
     city: { type: String, default: 'केऱ्हाळे बु.' },
     logoUrl: { type: String, default: '' },

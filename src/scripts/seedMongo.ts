@@ -101,7 +101,7 @@ async function runSeed() {
     name: 'न्यू युवा गणेश मंडळ, केऱ्हाळे बु.',
     tagline: 'न्यू युवा बॉईज - भव्य सार्वजनिक गणेशोत्सव २०२६',
     registrationNo: 'नोंदणी क्र. महा/केऱ्हाळे/२०२६',
-    establishedYear: 2012,
+    establishedYear: 1991,
     address: 'मेन चौक, केऱ्हाळे बुद्रुक (Kerhale Bk.)',
     city: 'केऱ्हाळे बु.',
     upiId: process.env.NEXT_PUBLIC_DEFAULT_UPI_ID || '9923092340@ybl',

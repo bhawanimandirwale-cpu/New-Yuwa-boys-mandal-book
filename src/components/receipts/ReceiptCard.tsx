@@ -48,7 +48,7 @@ export const ReceiptCard = forwardRef<HTMLDivElement, ReceiptCardProps>(
             <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400">
               <span>{mandal?.registrationNumber || 'नोंदणी क्र. महा/केऱ्हाळे/२०२६'}</span>
               <span>•</span>
-              <span>स्थापना {mandal?.establishedYear ? toDevanagariDigits(mandal.establishedYear) : '२०१२'}</span>
+              <span>स्थापना {mandal?.establishedYear ? toDevanagariDigits(mandal.establishedYear) : '१९९१'}</span>
             </div>
           </div>
         </div>

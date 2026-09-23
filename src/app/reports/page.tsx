@@ -131,7 +131,7 @@ export default function ReportsPage() {
           <div className="flex items-center justify-center gap-3 text-xs text-gray-500 mt-1">
             <span>नोंदणी क्र.: {mandal?.registrationNumber || 'महा/केऱ्हाळे/२०२६'}</span>
             <span>•</span>
-            <span>स्थापना वर्ष: {mandal?.establishedYear ? toDevanagariDigits(mandal.establishedYear) : '२०१२'}</span>
+            <span>स्थापना वर्ष: {mandal?.establishedYear ? toDevanagariDigits(mandal.establishedYear) : '१९९१'}</span>
           </div>
 
           <div className="mt-3 inline-block px-4 py-1 bg-gray-100 rounded-full text-xs font-black text-gray-800 border border-gray-300">

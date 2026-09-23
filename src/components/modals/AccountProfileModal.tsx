@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useApp } from '@/lib/context/AppContext';
+import { toDevanagariDigits } from '@/lib/numberToWordsMarathi';
 import {
   X,
   User,
@@ -208,7 +209,9 @@ export function AccountProfileModal() {
               </div>
               <div className="bg-white p-2 rounded-xl border border-gray-200/70">
                 <div className="text-[10px] text-gray-500 font-medium">स्थापना वर्ष</div>
-                <div className="font-bold text-gray-800 text-xs mt-0.5">२०१२ (१४ वे वर्ष)</div>
+                <div className="font-bold text-gray-800 text-xs mt-0.5">
+                  {toDevanagariDigits(mandal?.establishedYear || 1991)} ({toDevanagariDigits((mandal?.activeYear || 2026) - (mandal?.establishedYear || 1991) + 1)} वे वर्ष)
+                </div>
               </div>
             </div>
 
