@@ -3,34 +3,25 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useApp } from '@/lib/context/AppContext';
 import { 
   Home, 
   Receipt, 
+  Wallet,
   Users, 
-  FileText,
-  Plus
+  FileText
 } from 'lucide-react';
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { setIsAddDonationOpen, currentRole } = useApp();
-
-  const isPublicMember = currentRole === 'MEMBER';
 
   const triggerHaptic = () => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate(35);
+        navigator.vibrate(25);
       } catch (e) {
         // Ignore haptic error if unsupported
       }
     }
-  };
-
-  const handleCollectClick = () => {
-    triggerHaptic();
-    setIsAddDonationOpen(true);
   };
 
   return (
@@ -53,7 +44,7 @@ export function BottomNav() {
           <span className="text-[11px] tracking-tight font-heading mt-0.5">होम</span>
         </Link>
 
-        {/* 2. 📜 पावत्या (Receipts) */}
+        {/* 2. 📜 पावत्या (Receipts / Donations) */}
         <Link
           href="/donations"
           onClick={triggerHaptic}
@@ -67,20 +58,19 @@ export function BottomNav() {
           <span className="text-[11px] tracking-tight font-heading mt-0.5">पावत्या</span>
         </Link>
 
-        {/* 3. ➕ जमा (Center Floating Action Button) */}
-        <div className="relative -top-5 flex flex-col items-center px-1">
-          <button
-            type="button"
-            onClick={handleCollectClick}
-            className="w-14 h-14 rounded-full bg-gradient-to-tr from-saffron-600 via-amber-500 to-saffron-500 text-white flex items-center justify-center shadow-xl shadow-saffron-500/45 border-4 border-white active:scale-90 transition-all hover:shadow-saffron-500/60"
-            title="१०-सेकंद वर्गणी नोंदवा"
-          >
-            <Plus className="w-7 h-7 stroke-[3.2]" />
-          </button>
-          <span className="text-[11px] font-black text-saffron-700 font-heading mt-0.5 tracking-tight">
-            जमा
-          </span>
-        </div>
+        {/* 3. 💸 खर्च (Expenses) */}
+        <Link
+          href="/expenses"
+          onClick={triggerHaptic}
+          className={`flex flex-col items-center justify-center flex-1 py-1 transition-all ${
+            pathname === '/expenses'
+              ? 'text-rose-600 font-extrabold scale-105'
+              : 'text-gray-500 hover:text-gray-900 active:scale-95'
+          }`}
+        >
+          <Wallet className={`w-5 h-5 ${pathname === '/expenses' ? 'stroke-[2.8] text-rose-600' : 'stroke-2'}`} />
+          <span className="text-[11px] tracking-tight font-heading mt-0.5">खर्च</span>
+        </Link>
 
         {/* 4. 👥 कार्यकर्ते (Members) */}
         <Link
