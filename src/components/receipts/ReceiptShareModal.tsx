@@ -18,6 +18,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import confetti from 'canvas-confetti';
 import { safeCopyToClipboard } from '@/lib/clipboard';
+import { CandyButton } from '@/components/ui/candy-button';
 
 export function ReceiptShareModal() {
   const { selectedReceiptForShare, setSelectedReceiptForShare, mandal } = useApp();
@@ -148,15 +149,15 @@ ${receiptUrl}
         {/* Action Buttons Footer */}
         <div className="p-4 bg-white border-t border-gray-200 flex flex-col gap-2.5">
           {/* Main 1-Click WhatsApp Button */}
-          <a
-            href={encodedWhatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
+          <CandyButton
+            type="button"
+            variant="emerald"
+            onClick={() => window.open(encodedWhatsappUrl, '_blank', 'noopener,noreferrer')}
+            className="w-full py-3.5 px-4 rounded-2xl text-sm font-black shadow-lg"
           >
             <Send className="w-4 h-4 fill-white" />
             <span>व्हॉट्सॲपवर त्वरित पावती पाठवा (१-क्लिक)</span>
-          </a>
+          </CandyButton>
 
           {/* Secondary Actions: Download PNG & PDF */}
           <div className="grid grid-cols-2 gap-2">

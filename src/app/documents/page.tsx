@@ -28,6 +28,7 @@ import {
   Edit2,
   Trash2
 } from 'lucide-react';
+import { CandyButton } from '@/components/ui/candy-button';
 
 const CATEGORY_ICONS: Record<string, { label: string; icon: any; color: string; badgeColor: string }> = {
   POLICE: { label: 'पोलीस ठाणे परवानगी', icon: ShieldCheck, color: 'text-blue-600 bg-blue-50', badgeColor: 'bg-blue-100 text-blue-800' },
@@ -119,13 +120,15 @@ export default function DocumentsVaultPage() {
         </div>
 
         {!isPublicMember && (
-          <button
+          <CandyButton
+            type="button"
+            variant="blue"
             onClick={() => setIsAddOpen(true)}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+            className="py-2.5 px-4 rounded-2xl text-xs font-black"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span>＋ नवीन परवानगी जोडा</span>
-          </button>
+          </CandyButton>
         )}
       </div>
 
